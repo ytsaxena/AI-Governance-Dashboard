@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Budget & Governance Dashboard</title>
+  <!-- Tailwind CSS CDN for GitHub Pages & standalone browsing -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen font-sans p-4 sm:p-6 antialiased">
+  <div class="max-w-6xl mx-auto space-y-6">
+
+    <!-- Simple Header -->
+    <header class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="bg-blue-100 text-blue-700 font-semibold text-xs px-2.5 py-0.5 rounded-full">Company AI Tracker</span>
+          <span class="text-xs text-slate-500">Weekly View • Resets every Monday</span>
+        </div>
+        <h1 class="text-2xl font-bold text-slate-900 mt-1">AI Tools Usage & Budget Dashboard</h1>
+        <p class="text-sm text-slate-600">See who is using AI tools, how much money is spent, and stop safety risks.</p>
+      </div>
+
+      <!-- Quick Action -->
+      <div class="flex items-center gap-3">
+        <button onclick="openModal('newBudgetModal')" class="bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm px-4 py-2.5 rounded-xl transition shadow-sm">
+          + Change Team Budget
+        </button>
+      </div>
+    </header>
+
+    <!-- 4 Big Number Cards (One glance = Are we okay?) -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      
+      <!-- Card 1 -->
+      <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">This Week's Total Budget</p>
+        <p class="text-3xl font-bold text-slate-900 mt-1">₹10,00,000</p>
+        <p class="text-xs text-slate-500 mt-2">Shared across all 4 teams</p>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+        <div class="flex justify-between items-center">
+          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Money Spent So Far</p>
+          <span class="bg-amber-100 text-amber-800 text-xs font-bold px-2 py-0.5 rounded-full">78% used</span>
+        </div>
+        <p class="text-3xl font-bold text-slate-900 mt-1">₹7,80,000</p>
+        <div class="w-full bg-slate-100 h-2 rounded-full mt-2 overflow-hidden">
+          <div class="bg-amber-500 h-2 rounded-full" style="width: 78%"></div>
+        </div>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Money Left for 3 Days</p>
+        <p class="text-3xl font-bold text-emerald-600 mt-1">₹2,20,000</p>
+        <p class="text-xs text-slate-500 mt-2">Next reset: Monday morning</p>
+      </div>
+
+      <!-- Card 4 -->
+      <div class="bg-white border border-red-200 rounded-2xl p-4 shadow-sm bg-red-50/30">
+        <div class="flex justify-between items-center">
+          <p class="text-xs font-semibold text-red-600 uppercase tracking-wide">Safety Alerts</p>
+          <span class="bg-red-100 text-red-700 text-xs font-bold px-2 py-0.5 rounded-full">3 Alerts</span>
+        </div>
+        <p class="text-3xl font-bold text-red-600 mt-1">1 Urgent</p>
+        <p class="text-xs text-red-600 mt-2">1 unapproved personal account</p>
+      </div>
+
+    </section>
+
+    <!-- Main Content: Simple Layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+      <!-- LEFT: Team & Person Lists (2 Cols) -->
+      <div class="lg:col-span-2 space-y-4">
+        
+        <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+          
+          <!-- Tab Switcher & Search Bar -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-3">
+            <div class="flex items-center gap-2 bg-slate-100 p-1 rounded-xl">
+              <button id="teamTab" onclick="showTab('team')" class="px-4 py-1.5 rounded-lg text-xs font-bold bg-white text-slate-900 shadow-sm transition">
+                View by Team
+              </button>
+              <button id="personTab" onclick="showTab('person')" class="px-4 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900 transition">
+                View by Person (Who is using what)
+              </button>
+            </div>
+
+            <!-- Simple Search -->
+            <div>
+              <input type="text" id="simpleSearch" onkeyup="searchPeople()" placeholder="Search person (e.g. Rohan, Priya)..." class="text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 w-full sm:w-56 focus:outline-none focus:border-blue-500">
+            </div>
+          </div>
+
+          <!-- TAB 1: TEAM VIEW -->
+          <div id="teamView" class="divide-y divide-slate-100 mt-2">
+            
+            <!-- Engineering -->
+            <div class="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <div class="flex items-center gap-2">
+                  <h3 class="font-bold text-slate-900 text-base">Engineering Team</h3>
+                  <span class="bg-red-100 text-red-700 text-xs font-medium px-2 py-0.5 rounded-full">Almost full (90%)</span>
+                </div>
+                <p class="text-xs text-slate-500 mt-1">Tool used: <strong>Claude Code</strong> • 15 engineers</p>
+                <button onclick="filterToTeam('Engineering')" class="text-xs text-blue-600 hover:underline font-medium mt-1">
+                  See all 15 engineers →
+                </button>
+              </div>
+
+              <div class="w-full sm:w-60">
+                <div class="flex justify-between text-xs text-slate-600 mb-1">
+                  <span>Spent: <strong>₹3,60,000</strong></span>
+                  <span>Limit: ₹4,00,000</span>
+                </div>
+                <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                  <div class="bg-red-500 h-2.5 rounded-full" style="width: 90%"></div>
+                </div>
+                <p class="text-[11px] text-red-600 mt-1">Only ₹40,000 left for this week</p>
+              </div>
+            </div>
+
+            <!-- Sales -->
+            <div class="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <div class="flex items-center gap-2">
+                  <h3 class="font-bold text-slate-900 text-base">Sales Team</h3>
+                  <span class="bg-emerald-100 text-emerald-700 text-xs font-medium px-2 py-0.5 rounded-full">Normal (75%)</span>
+                </div>
+                <p class="text-xs text-slate-500 mt-1">Tool used: <strong>ChatGPT Enterprise</strong> • 20 people</p>
+                <button onclick="filterToTeam('Sales')" class="text-xs text-blue-600 hover:underline font-medium mt-1">
+                  See all 20 people →
+                </button>
+              </div>
+
+              <div class="w-full sm:w-60">
+                <div class="flex justify-between text-xs text-slate-600 mb-1">
+                  <span>Spent: <strong>₹2,25,000</strong></span>
+                  <span>Limit: ₹3,00,000</span>
+                </div>
+                <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                  <div class="bg-emerald-500 h-2.5 rounded-full" style="width: 75%"></div>
+                </div>
+                <p class="text-[11px] text-slate-500 mt-1">₹75,000 left (spending normally)</p>
+              </div>
+            </div>
+
+            <!-- Design -->
+            <div class="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <div class="flex items-center gap-2">
+                  <h3 class="font-bold text-slate-900 text-base">Design Team</h3>
+                  <span class="bg-emerald-100 text-emerald-700 text-xs font-medium px-2 py-0.5 rounded-full">Normal (65%)</span>
+                </div>
+                <p class="text-xs text-slate-500 mt-1">Tool used: <strong>Figma AI</strong> • 8 designers</p>
+                <button onclick="filterToTeam('Design')" class="text-xs text-blue-600 hover:underline font-medium mt-1">
+                  See all 8 designers →
+                </button>
+              </div>
+
+              <div class="w-full sm:w-60">
+                <div class="flex justify-between text-xs text-slate-600 mb-1">
+                  <span>Spent: <strong>₹1,30,000</strong></span>
+                  <span>Limit: ₹2,00,000</span>
+                </div>
+                <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                  <div class="bg-blue-500 h-2.5 rounded-full" style="width: 65%"></div>
+                </div>
+                <p class="text-[11px] text-slate-500 mt-1">₹70,000 left</p>
+              </div>
+            </div>
+
+            <!-- Leadership -->
+            <div class="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <div class="flex items-center gap-2">
+                  <h3 class="font-bold text-slate-900 text-base">Leadership & Operations</h3>
+                  <span class="bg-slate-100 text-slate-700 text-xs font-medium px-2 py-0.5 rounded-full">Low use (65%)</span>
+                </div>
+                <p class="text-xs text-slate-500 mt-1">Tool used: <strong>ChatGPT Enterprise</strong> • 6 people</p>
+                <button onclick="filterToTeam('Leadership')" class="text-xs text-blue-600 hover:underline font-medium mt-1">
+                  See all 6 people →
+                </button>
+              </div>
+
+              <div class="w-full sm:w-60">
+                <div class="flex justify-between text-xs text-slate-600 mb-1">
+                  <span>Spent: <strong>₹65,000</strong></span>
+                  <span>Limit: ₹1,00,000</span>
+                </div>
+                <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                  <div class="bg-slate-400 h-2.5 rounded-full" style="width: 65%"></div>
+                </div>
+                <p class="text-[11px] text-slate-500 mt-1">₹35,000 left</p>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- TAB 2: PERSON VIEW (Specific Individuals with Indian Names) -->
+          <div id="personView" class="hidden mt-4 overflow-x-auto">
+            <p class="text-xs text-slate-500 mb-3">Here is the exact list of people using AI tools this week:</p>
+            <table class="w-full text-left text-xs">
+              <thead>
+                <tr class="bg-slate-50 text-slate-600 border-y border-slate-200">
+                  <th class="py-2.5 px-3">Person Name</th>
+                  <th class="py-2.5 px-3">Team</th>
+                  <th class="py-2.5 px-3">AI Tool Used</th>
+                  <th class="py-2.5 px-3">Money Spent</th>
+                  <th class="py-2.5 px-3">Status</th>
+                  <th class="py-2.5 px-3 text-right">What you can do</th>
+                </tr>
+              </thead>
+              <tbody id="personTableBody" class="divide-y divide-slate-100">
+
+                <!-- Person 1: Rohan Sharma -->
+                <tr class="person-row hover:bg-slate-50" data-name="Rohan Sharma" data-team="Engineering">
+                  <td class="py-3 px-3">
+                    <strong class="text-slate-900 block text-sm">Rohan Sharma</strong>
+                    <span class="text-slate-500 text-[11px]">Engineering Lead</span>
+                  </td>
+                  <td class="py-3 px-3">Engineering</td>
+                  <td class="py-3 px-3 font-medium">Claude Code</td>
+                  <td class="py-3 px-3">
+                    <strong class="text-slate-900">₹1,20,000</strong>
+                    <span class="text-slate-500 block text-[11px]">Limit: ₹1,20,000</span>
+                  </td>
+                  <td class="py-3 px-3">
+                    <span class="bg-amber-100 text-amber-800 text-[11px] font-semibold px-2 py-0.5 rounded-full">Hit 100% of Limit</span>
+                  </td>
+                  <td class="py-3 px-3 text-right">
+                    <button onclick="openPersonLimitModal('Rohan Sharma', 'Engineering', 120000)" class="text-blue-600 hover:text-blue-800 font-semibold">
+                      Increase Limit
+                    </button>
+                  </td>
+                </tr>
+
+                <!-- Person 2: Arjun Mehta (Runaway script) -->
+                <tr class="person-row hover:bg-red-50/40 bg-red-50/20" data-name="Arjun Mehta" data-team="Engineering">
+                  <td class="py-3 px-3">
+                    <strong class="text-slate-900 block text-sm">Arjun Mehta</strong>
+                    <span class="text-slate-500 text-[11px]">Senior Developer</span>
+                  </td>
+                  <td class="py-3 px-3">Engineering</td>
+                  <td class="py-3 px-3 font-medium">Claude Code</td>
+                  <td class="py-3 px-3">
+                    <strong class="text-red-600">₹1,10,000</strong>
+                    <span class="text-slate-500 block text-[11px]">Limit was: ₹80,000</span>
+                  </td>
+                  <td class="py-3 px-3">
+                    <span class="bg-red-100 text-red-700 text-[11px] font-semibold px-2 py-0.5 rounded-full">Exceeded Limit (Stopped)</span>
+                  </td>
+                  <td class="py-3 px-3 text-right">
+                    <button onclick="openPersonLimitModal('Arjun Mehta', 'Engineering', 80000)" class="text-red-600 hover:underline font-semibold">
+                      Reset / Unpause
+                    </button>
+                  </td>
+                </tr>
+
+                <!-- Person 3: Sneha Rao (Personal Account / Shadow IT) -->
+                <tr class="person-row hover:bg-amber-50/40 bg-amber-50/20" data-name="Sneha Rao" data-team="Sales">
+                  <td class="py-3 px-3">
+                    <strong class="text-slate-900 block text-sm">Sneha Rao</strong>
+                    <span class="text-slate-500 text-[11px]">Account Executive</span>
+                  </td>
+                  <td class="py-3 px-3">Sales</td>
+                  <td class="py-3 px-3">
+                    <span class="font-medium text-red-600">Personal ChatGPT</span>
+                    <span class="block text-[10px] text-slate-500">Used company laptop</span>
+                  </td>
+                  <td class="py-3 px-3">
+                    <strong class="text-slate-900">₹2,000</strong>
+                    <span class="text-slate-500 block text-[11px]">Billed to personal card</span>
+                  </td>
+                  <td class="py-3 px-3">
+                    <span class="bg-red-100 text-red-700 text-[11px] font-semibold px-2 py-0.5 rounded-full">Unapproved Tool</span>
+                  </td>
+                  <td class="py-3 px-3 text-right">
+                    <button onclick="alert('Sent company ChatGPT login link to Sneha Rao.')" class="text-blue-600 hover:underline font-semibold">
+                      Give Company Account
+                    </button>
+                  </td>
+                </tr>
+
+                <!-- Person 4: Priya Nair (Design) -->
+                <tr class="person-row hover:bg-slate-50" data-name="Priya Nair" data-team="Design">
+                  <td class="py-3 px-3">
+                    <strong class="text-slate-900 block text-sm">Priya Nair</strong>
+                    <span class="text-slate-500 text-[11px]">Lead UX Designer</span>
+                  </td>
+                  <td class="py-3 px-3">Design</td>
+                  <td class="py-3 px-3 font-medium">Figma AI</td>
+                  <td class="py-3 px-3">
+                    <strong class="text-slate-900">₹25,000</strong>
+                    <span class="text-slate-500 block text-[11px]">Monthly fixed seat</span>
+                  </td>
+                  <td class="py-3 px-3">
+                    <span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full">Safe & Approved</span>
+                  </td>
+                  <td class="py-3 px-3 text-right">
+                    <button onclick="openPersonLimitModal('Priya Nair', 'Design', 25000)" class="text-slate-500 hover:text-slate-800">
+                      Manage
+                    </button>
+                  </td>
+                </tr>
+
+                <!-- Person 5: Vikram Malhotra (Leadership) -->
+                <tr class="person-row hover:bg-slate-50" data-name="Vikram Malhotra" data-team="Leadership">
+                  <td class="py-3 px-3">
+                    <strong class="text-slate-900 block text-sm">Vikram Malhotra</strong>
+                    <span class="text-slate-500 text-[11px]">VP Operations</span>
+                  </td>
+                  <td class="py-3 px-3">Leadership</td>
+                  <td class="py-3 px-3 font-medium">ChatGPT Enterprise</td>
+                  <td class="py-3 px-3">
+                    <strong class="text-slate-900">₹18,000</strong>
+                    <span class="text-slate-500 block text-[11px]">Limit: ₹50,000</span>
+                  </td>
+                  <td class="py-3 px-3">
+                    <span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full">Safe & Approved</span>
+                  </td>
+                  <td class="py-3 px-3 text-right">
+                    <button onclick="openPersonLimitModal('Vikram Malhotra', 'Leadership', 50000)" class="text-slate-500 hover:text-slate-800">
+                      Manage
+                    </button>
+                  </td>
+                </tr>
+
+                <!-- Person 6: Ananya Verma (Sales) -->
+                <tr class="person-row hover:bg-slate-50" data-name="Ananya Verma" data-team="Sales">
+                  <td class="py-3 px-3">
+                    <strong class="text-slate-900 block text-sm">Ananya Verma</strong>
+                    <span class="text-slate-500 text-[11px]">Sales Manager</span>
+                  </td>
+                  <td class="py-3 px-3">Sales</td>
+                  <td class="py-3 px-3 font-medium">ChatGPT Enterprise</td>
+                  <td class="py-3 px-3">
+                    <strong class="text-slate-900">₹40,000</strong>
+                    <span class="text-slate-500 block text-[11px]">Limit: ₹50,000</span>
+                  </td>
+                  <td class="py-3 px-3">
+                    <span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full">Safe & Approved</span>
+                  </td>
+                  <td class="py-3 px-3 text-right">
+                    <button onclick="openPersonLimitModal('Ananya Verma', 'Sales', 50000)" class="text-slate-500 hover:text-slate-800">
+                      Manage
+                    </button>
+                  </td>
+                </tr>
+
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- RIGHT: Approvals & Safety Alerts (1 Col) -->
+      <div class="space-y-4">
+        
+        <!-- Quick Approvals Box -->
+        <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+            <h2 class="font-bold text-slate-900 text-sm">Pending Budget Requests</h2>
+            <span class="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-0.5 rounded-full">1 New</span>
+          </div>
+
+          <div class="mt-4 p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-2">
+            <div class="flex justify-between items-start">
+              <div>
+                <strong class="text-slate-900 text-sm">Rohan Sharma</strong>
+                <span class="block text-slate-500">Engineering Lead</span>
+              </div>
+              <span class="text-blue-600 font-bold">+₹50,000</span>
+            </div>
+            <p class="text-slate-600 text-xs">
+              "We are releasing a big code update this Friday. We need more Claude Code budget to test without getting stopped."
+            </p>
+            <div class="flex gap-2 pt-1">
+              <button onclick="approveRequest()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-1.5 rounded-lg text-center transition">
+                Approve
+              </button>
+              <button onclick="rejectRequest()" class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium py-1.5 rounded-lg text-center transition">
+                Decline
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Safety Alerts Box -->
+        <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+            <h2 class="font-bold text-slate-900 text-sm">Safety & Policy Alerts</h2>
+            <span class="text-xs text-red-600 font-bold">3 Unresolved</span>
+          </div>
+
+          <div class="mt-3 space-y-3 text-xs">
+            
+            <!-- Alert 1: Unapproved personal tool -->
+            <div class="p-3 bg-red-50 border border-red-200 rounded-xl space-y-1">
+              <div class="flex justify-between items-start">
+                <strong class="text-red-700 font-bold">Unapproved Tool Used</strong>
+                <span class="text-[10px] text-slate-500">15 mins ago</span>
+              </div>
+              <p class="text-slate-700">
+                <strong>Sneha Rao</strong> (Sales) logged into a personal ChatGPT account on her company laptop.
+              </p>
+              <button onclick="alert('Invited Sneha to company approved account.')" class="text-blue-600 font-medium hover:underline text-[11px] pt-1 block">
+                Give her official company login →
+              </button>
+            </div>
+
+            <!-- Alert 2: Runaway script -->
+            <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl space-y-1">
+              <div class="flex justify-between items-start">
+                <strong class="text-amber-800 font-bold">Spending Spike Stopped</strong>
+                <span class="text-[10px] text-slate-500">2 hours ago</span>
+              </div>
+              <p class="text-slate-700">
+                <strong>Arjun Mehta's</strong> automated script made 500 calls in 10 minutes. The system automatically paused it.
+              </p>
+              <button onclick="alert('Notification sent to Arjun.')" class="text-blue-600 font-medium hover:underline text-[11px] pt-1 block">
+                Acknowledge & message Arjun →
+              </button>
+            </div>
+
+            <!-- Alert 3: Customer email pasted -->
+            <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
+              <div class="flex justify-between items-start">
+                <strong class="text-slate-700 font-bold">Customer Info Cleaned</strong>
+                <span class="text-[10px] text-slate-500">Yesterday</span>
+              </div>
+              <p class="text-slate-700">
+                Customer email addresses were removed automatically before sending prompt to AI.
+              </p>
+              <span class="text-emerald-700 font-medium text-[11px] block">Protected by system</span>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Simple Modal: Change Person Limit -->
+    <div id="personLimitModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+      <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl border border-slate-200">
+        <h3 class="font-bold text-slate-900 text-base" id="modalPersonTitle">Change Limit</h3>
+        <p class="text-xs text-slate-500 mt-1" id="modalPersonSub">Set weekly spending limit for this person.</p>
+        
+        <div class="mt-4 space-y-3 text-xs">
+          <div>
+            <label class="block text-slate-700 font-medium mb-1">New Weekly Limit (₹)</label>
+            <input type="number" id="newCapValue" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-slate-900 font-bold text-sm focus:outline-none focus:border-blue-500">
+          </div>
+          <div>
+            <label class="block text-slate-700 font-medium mb-1">When limit is reached:</label>
+            <select class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2 text-slate-700">
+              <option>Stop AI access until next Monday</option>
+              <option>Send an email alert but allow work to continue</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="mt-6 flex justify-end gap-2 text-xs">
+          <button onclick="closeModal('personLimitModal')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl">Cancel</button>
+          <button onclick="savePersonLimit()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Simple Modal: Team Budget -->
+    <div id="newBudgetModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+      <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl border border-slate-200">
+        <h3 class="font-bold text-slate-900 text-base">Change Team Weekly Budget</h3>
+        
+        <div class="mt-4 space-y-3 text-xs">
+          <div>
+            <label class="block text-slate-700 font-medium mb-1">Choose Team</label>
+            <select class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2 text-slate-700">
+              <option>Engineering (Claude Code)</option>
+              <option>Sales (ChatGPT Enterprise)</option>
+              <option>Design (Figma AI)</option>
+              <option>Leadership (ChatGPT Enterprise)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-slate-700 font-medium mb-1">Weekly Budget (₹)</label>
+            <input type="number" value="450000" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-slate-900 font-bold text-sm">
+          </div>
+        </div>
+
+        <div class="mt-6 flex justify-end gap-2 text-xs">
+          <button onclick="closeModal('newBudgetModal')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl">Cancel</button>
+          <button onclick="saveTeamLimit()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl">Save</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    function openModal(id) {
+      document.getElementById(id).classList.remove('hidden');
+    }
+    function closeModal(id) {
+      document.getElementById(id).classList.add('hidden');
+    }
+
+    function showTab(tab) {
+      const teamView = document.getElementById('teamView');
+      const personView = document.getElementById('personView');
+      const teamTab = document.getElementById('teamTab');
+      const personTab = document.getElementById('personTab');
+
+      if(tab === 'team') {
+        teamView.classList.remove('hidden');
+        personView.classList.add('hidden');
+        teamTab.className = "px-4 py-1.5 rounded-lg text-xs font-bold bg-white text-slate-900 shadow-sm transition";
+        personTab.className = "px-4 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900 transition";
+      } else {
+        teamView.classList.add('hidden');
+        personView.classList.remove('hidden');
+        personTab.className = "px-4 py-1.5 rounded-lg text-xs font-bold bg-white text-slate-900 shadow-sm transition";
+        teamTab.className = "px-4 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900 transition";
+      }
+    }
+
+    function filterToTeam(teamName) {
+      showTab('person');
+      document.getElementById('simpleSearch').value = teamName;
+      searchPeople();
+    }
+
+    function searchPeople() {
+      const query = document.getElementById('simpleSearch').value.toLowerCase();
+      if(query.trim() !== '') {
+        const personView = document.getElementById('personView');
+        if(personView.classList.contains('hidden')) {
+          showTab('person');
+        }
+      }
+      const rows = document.querySelectorAll('.person-row');
+      rows.forEach(row => {
+        const name = row.getAttribute('data-name').toLowerCase();
+        const team = row.getAttribute('data-team').toLowerCase();
+        if(name.includes(query) || team.includes(query)) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    }
+
+    function openPersonLimitModal(name, team, cap) {
+      document.getElementById('modalPersonTitle').textContent = `Set Limit for ${name}`;
+      document.getElementById('modalPersonSub').textContent = `${team} team • Current limit: ₹${cap.toLocaleString('en-IN')}`;
+      document.getElementById('newCapValue').value = cap;
+      openModal('personLimitModal');
+    }
+
+    function savePersonLimit() {
+      const val = document.getElementById('newCapValue').value;
+      alert(`Limit successfully updated to ₹${Number(val).toLocaleString('en-IN')} per week.`);
+      closeModal('personLimitModal');
+    }
+
+    function saveTeamLimit() {
+      alert("Team budget updated successfully.");
+      closeModal('newBudgetModal');
+    }
+
+    function approveRequest() {
+      alert("Approved +₹50,000 for Rohan Sharma (Engineering). New limit applied immediately.");
+    }
+
+    function rejectRequest() {
+      alert("Request declined.");
+    }
+  </script>
+</body>
+</html>
