@@ -27,6 +27,14 @@
 <body class="bg-slate-50 text-slate-900 min-h-screen font-sans p-4 sm:p-6 antialiased">
   <div class="max-w-6xl mx-auto space-y-6">
 
+    <!-- Toast Notification Popup -->
+    <div id="toastNotification" class="fixed top-5 right-5 z-50 transform transition-all duration-300 opacity-0 translate-y-[-20px] pointer-events-none">
+      <div class="bg-slate-900 text-white text-xs font-medium py-3 px-4 rounded-xl shadow-2xl flex items-center gap-2 border border-slate-700">
+        <span class="text-emerald-400 font-bold text-sm">✓</span>
+        <span id="toastMessage">Budget updated successfully!</span>
+      </div>
+    </div>
+
     <!-- Simple Header -->
     <header class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div>
@@ -40,8 +48,8 @@
 
       <!-- Quick Action -->
       <div class="flex items-center gap-3">
-        <button onclick="openModal('newBudgetModal')" class="bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm px-4 py-2.5 rounded-xl transition shadow-sm">
-          + Change Team Budget
+        <button onclick="openChangeBudgetModal('Engineering')" class="bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm px-4 py-2.5 rounded-xl transition shadow-sm flex items-center gap-1.5">
+          <span>+ Change Team Budget</span>
         </button>
       </div>
     </header>
@@ -49,33 +57,33 @@
     <!-- 4 Big Number Cards (One glance = Are we okay?) -->
     <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       
-      <!-- Card 1 -->
+      <!-- Card 1: Total Org Budget -->
       <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
         <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">This Week's Total Budget</p>
-        <p class="text-3xl font-bold text-slate-900 mt-1">₹10,00,000</p>
+        <p class="text-3xl font-bold text-slate-900 mt-1" id="orgTotalBudget">₹10,00,000</p>
         <p class="text-xs text-slate-500 mt-2">Shared across all 4 teams</p>
       </div>
 
-      <!-- Card 2 -->
+      <!-- Card 2: Spent so far -->
       <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
         <div class="flex justify-between items-center">
           <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Money Spent So Far</p>
-          <span class="bg-amber-100 text-amber-800 text-xs font-bold px-2 py-0.5 rounded-full">78% used</span>
+          <span class="bg-amber-100 text-amber-800 text-xs font-bold px-2 py-0.5 rounded-full" id="orgBurnPercentBadge">78% used</span>
         </div>
-        <p class="text-3xl font-bold text-slate-900 mt-1">₹7,80,000</p>
+        <p class="text-3xl font-bold text-slate-900 mt-1" id="orgTotalSpent">₹7,80,000</p>
         <div class="w-full bg-slate-100 h-2 rounded-full mt-2 overflow-hidden">
-          <div class="bg-amber-500 h-2 rounded-full" style="width: 78%"></div>
+          <div class="bg-amber-500 h-2 rounded-full transition-all duration-500" id="orgProgressBar" style="width: 78%"></div>
         </div>
       </div>
 
-      <!-- Card 3 -->
+      <!-- Card 3: Money Left -->
       <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
         <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Money Left for 3 Days</p>
-        <p class="text-3xl font-bold text-emerald-600 mt-1">₹2,20,000</p>
+        <p class="text-3xl font-bold text-emerald-600 mt-1" id="orgMoneyLeft">₹2,20,000</p>
         <p class="text-xs text-slate-500 mt-2">Next reset: Monday morning</p>
       </div>
 
-      <!-- Card 4 -->
+      <!-- Card 4: Safety Alerts -->
       <div class="bg-white border border-red-200 rounded-2xl p-4 shadow-sm bg-red-50/30">
         <div class="flex justify-between items-center">
           <p class="text-xs font-semibold text-red-600 uppercase tracking-wide">Safety Alerts</p>
@@ -133,107 +141,127 @@
           <!-- TAB 1: TEAM VIEW -->
           <div id="teamView" class="divide-y divide-slate-100 mt-2">
             
-            <!-- Engineering -->
-            <div class="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <!-- 1. Engineering -->
+            <div class="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4" id="teamCard-Engineering">
               <div>
                 <div class="flex items-center gap-2">
                   <h3 class="font-bold text-slate-900 text-base">Engineering Team</h3>
-                  <span class="bg-red-100 text-red-700 text-xs font-medium px-2 py-0.5 rounded-full">Almost full (90%)</span>
+                  <span class="text-xs font-medium px-2 py-0.5 rounded-full" id="engBadge">Almost full (90%)</span>
                 </div>
                 <p class="text-xs text-slate-500 mt-1">Tool used: <strong>Claude Code</strong> • 15 active engineers</p>
-                <button onclick="filterToTeam('Engineering')" class="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-semibold mt-1.5 bg-blue-50 px-2.5 py-1 rounded-lg transition">
-                  <span>See all 15 engineers</span>
-                  <span>↓</span>
-                </button>
+                <div class="flex items-center gap-3 mt-1.5">
+                  <button onclick="filterToTeam('Engineering')" class="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-semibold bg-blue-50 px-2.5 py-1 rounded-lg transition">
+                    <span>See all 15 engineers</span>
+                    <span>↓</span>
+                  </button>
+                  <button onclick="openChangeBudgetModal('Engineering')" class="text-xs text-slate-500 hover:text-slate-800 underline">
+                    Edit Budget
+                  </button>
+                </div>
               </div>
 
               <div class="w-full sm:w-60">
                 <div class="flex justify-between text-xs text-slate-600 mb-1">
-                  <span>Spent: <strong>₹3,60,000</strong></span>
-                  <span>Limit: ₹4,00,000</span>
+                  <span>Spent: <strong id="engSpentText">₹3,60,000</strong></span>
+                  <span id="engLimitText">Limit: ₹4,00,000</span>
                 </div>
                 <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-                  <div class="bg-red-500 h-2.5 rounded-full" style="width: 90%"></div>
+                  <div class="h-2.5 rounded-full transition-all duration-500" id="engProgressBar" style="width: 90%"></div>
                 </div>
-                <p class="text-[11px] text-red-600 mt-1">Only ₹40,000 left for this week</p>
+                <p class="text-[11px] mt-1" id="engRemainingText">Only ₹40,000 left for this week</p>
               </div>
             </div>
 
-            <!-- Sales -->
-            <div class="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <!-- 2. Sales -->
+            <div class="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4" id="teamCard-Sales">
               <div>
                 <div class="flex items-center gap-2">
                   <h3 class="font-bold text-slate-900 text-base">Sales Team</h3>
-                  <span class="bg-emerald-100 text-emerald-700 text-xs font-medium px-2 py-0.5 rounded-full">Normal (75%)</span>
+                  <span class="text-xs font-medium px-2 py-0.5 rounded-full" id="salesBadge">Normal (75%)</span>
                 </div>
                 <p class="text-xs text-slate-500 mt-1">Tool used: <strong>ChatGPT Enterprise</strong> • 10 people</p>
-                <button onclick="filterToTeam('Sales')" class="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-semibold mt-1.5 bg-blue-50 px-2.5 py-1 rounded-lg transition">
-                  <span>See all 10 sales members</span>
-                  <span>↓</span>
-                </button>
+                <div class="flex items-center gap-3 mt-1.5">
+                  <button onclick="filterToTeam('Sales')" class="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-semibold bg-blue-50 px-2.5 py-1 rounded-lg transition">
+                    <span>See all 10 sales members</span>
+                    <span>↓</span>
+                  </button>
+                  <button onclick="openChangeBudgetModal('Sales')" class="text-xs text-slate-500 hover:text-slate-800 underline">
+                    Edit Budget
+                  </button>
+                </div>
               </div>
 
               <div class="w-full sm:w-60">
                 <div class="flex justify-between text-xs text-slate-600 mb-1">
-                  <span>Spent: <strong>₹2,25,000</strong></span>
-                  <span>Limit: ₹3,00,000</span>
+                  <span>Spent: <strong id="salesSpentText">₹2,25,000</strong></span>
+                  <span id="salesLimitText">Limit: ₹3,00,000</span>
                 </div>
                 <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-                  <div class="bg-emerald-500 h-2.5 rounded-full" style="width: 75%"></div>
+                  <div class="h-2.5 rounded-full transition-all duration-500" id="salesProgressBar" style="width: 75%"></div>
                 </div>
-                <p class="text-[11px] text-slate-500 mt-1">₹75,000 left (spending normally)</p>
+                <p class="text-[11px] mt-1" id="salesRemainingText">₹75,000 left (spending normally)</p>
               </div>
             </div>
 
-            <!-- Design -->
-            <div class="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <!-- 3. Design -->
+            <div class="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4" id="teamCard-Design">
               <div>
                 <div class="flex items-center gap-2">
                   <h3 class="font-bold text-slate-900 text-base">Design Team</h3>
-                  <span class="bg-emerald-100 text-emerald-700 text-xs font-medium px-2 py-0.5 rounded-full">Normal (65%)</span>
+                  <span class="text-xs font-medium px-2 py-0.5 rounded-full" id="designBadge">Normal (65%)</span>
                 </div>
                 <p class="text-xs text-slate-500 mt-1">Tool used: <strong>Figma AI</strong> • 6 designers</p>
-                <button onclick="filterToTeam('Design')" class="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-semibold mt-1.5 bg-blue-50 px-2.5 py-1 rounded-lg transition">
-                  <span>See all 6 designers</span>
-                  <span>↓</span>
-                </button>
+                <div class="flex items-center gap-3 mt-1.5">
+                  <button onclick="filterToTeam('Design')" class="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-semibold bg-blue-50 px-2.5 py-1 rounded-lg transition">
+                    <span>See all 6 designers</span>
+                    <span>↓</span>
+                  </button>
+                  <button onclick="openChangeBudgetModal('Design')" class="text-xs text-slate-500 hover:text-slate-800 underline">
+                    Edit Budget
+                  </button>
+                </div>
               </div>
 
               <div class="w-full sm:w-60">
                 <div class="flex justify-between text-xs text-slate-600 mb-1">
-                  <span>Spent: <strong>₹1,30,000</strong></span>
-                  <span>Limit: ₹2,00,000</span>
+                  <span>Spent: <strong id="designSpentText">₹1,30,000</strong></span>
+                  <span id="designLimitText">Limit: ₹2,00,000</span>
                 </div>
                 <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-                  <div class="bg-blue-500 h-2.5 rounded-full" style="width: 65%"></div>
+                  <div class="h-2.5 rounded-full transition-all duration-500" id="designProgressBar" style="width: 65%"></div>
                 </div>
-                <p class="text-[11px] text-slate-500 mt-1">₹70,000 left</p>
+                <p class="text-[11px] mt-1" id="designRemainingText">₹70,000 left</p>
               </div>
             </div>
 
-            <!-- Leadership -->
-            <div class="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <!-- 4. Leadership -->
+            <div class="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4" id="teamCard-Leadership">
               <div>
                 <div class="flex items-center gap-2">
                   <h3 class="font-bold text-slate-900 text-base">Leadership & Operations</h3>
-                  <span class="bg-slate-100 text-slate-700 text-xs font-medium px-2 py-0.5 rounded-full">Low use (65%)</span>
+                  <span class="text-xs font-medium px-2 py-0.5 rounded-full" id="leadershipBadge">Low use (65%)</span>
                 </div>
                 <p class="text-xs text-slate-500 mt-1">Tool used: <strong>ChatGPT Enterprise</strong> • 4 people</p>
-                <button onclick="filterToTeam('Leadership')" class="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-semibold mt-1.5 bg-blue-50 px-2.5 py-1 rounded-lg transition">
-                  <span>See all 4 leaders</span>
-                  <span>↓</span>
-                </button>
+                <div class="flex items-center gap-3 mt-1.5">
+                  <button onclick="filterToTeam('Leadership')" class="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-semibold bg-blue-50 px-2.5 py-1 rounded-lg transition">
+                    <span>See all 4 leaders</span>
+                    <span>↓</span>
+                  </button>
+                  <button onclick="openChangeBudgetModal('Leadership')" class="text-xs text-slate-500 hover:text-slate-800 underline">
+                    Edit Budget
+                  </button>
+                </div>
               </div>
 
               <div class="w-full sm:w-60">
                 <div class="flex justify-between text-xs text-slate-600 mb-1">
-                  <span>Spent: <strong>₹65,000</strong></span>
-                  <span>Limit: ₹1,00,000</span>
+                  <span>Spent: <strong id="leadershipSpentText">₹65,000</strong></span>
+                  <span id="leadershipLimitText">Limit: ₹1,00,000</span>
                 </div>
                 <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-                  <div class="bg-slate-400 h-2.5 rounded-full" style="width: 65%"></div>
+                  <div class="h-2.5 rounded-full transition-all duration-500" id="leadershipProgressBar" style="width: 65%"></div>
                 </div>
-                <p class="text-[11px] text-slate-500 mt-1">₹35,000 left</p>
+                <p class="text-[11px] mt-1" id="leadershipRemainingText">₹35,000 left</p>
               </div>
             </div>
 
@@ -266,7 +294,7 @@
                     <!-- ================= 15 ENGINEERS ================= -->
                     
                     <!-- 1. Rohan Sharma -->
-                    <tr class="person-row hover:bg-slate-50" data-name="Rohan Sharma" data-team="Engineering">
+                    <tr class="person-row hover:bg-slate-50" data-name="Rohan Sharma" data-team="Engineering" id="row-Rohan-Sharma">
                       <td class="py-3 px-3">
                         <strong class="text-slate-900 block text-sm">Rohan Sharma</strong>
                         <span class="text-slate-500 text-[11px]">Engineering Lead</span>
@@ -274,21 +302,21 @@
                       <td class="py-3 px-3"><span class="bg-purple-50 text-purple-700 px-2 py-0.5 rounded text-[10px] font-semibold">Engineering</span></td>
                       <td class="py-3 px-3 font-medium">Claude Code</td>
                       <td class="py-3 px-3">
-                        <strong class="text-slate-900">₹1,20,000</strong>
-                        <span class="text-slate-500 block text-[11px]">Limit: ₹1,20,000</span>
+                        <strong class="text-slate-900 block font-semibold person-spent">₹1,20,000</strong>
+                        <span class="text-slate-500 block text-[11px] person-limit" id="limit-Rohan-Sharma">Limit: ₹1,20,000</span>
                       </td>
                       <td class="py-3 px-3">
-                        <span class="bg-amber-100 text-amber-800 text-[11px] font-semibold px-2 py-0.5 rounded-full">Hit 100% of Limit</span>
+                        <span class="bg-amber-100 text-amber-800 text-[11px] font-semibold px-2 py-0.5 rounded-full person-status" id="status-Rohan-Sharma">Hit 100% of Limit</span>
                       </td>
                       <td class="py-3 px-3 text-right">
-                        <button onclick="openPersonLimitModal('Rohan Sharma', 'Engineering', 120000)" class="text-blue-600 hover:text-blue-800 font-semibold">
+                        <button onclick="openPersonLimitModal('Rohan Sharma', 'Engineering', 120000, 120000)" class="text-blue-600 hover:text-blue-800 font-semibold">
                           Increase Limit
                         </button>
                       </td>
                     </tr>
 
                     <!-- 2. Arjun Mehta (Runaway script) -->
-                    <tr class="person-row hover:bg-red-50/40 bg-red-50/20" data-name="Arjun Mehta" data-team="Engineering">
+                    <tr class="person-row hover:bg-red-50/40 bg-red-50/20" data-name="Arjun Mehta" data-team="Engineering" id="row-Arjun-Mehta">
                       <td class="py-3 px-3">
                         <strong class="text-slate-900 block text-sm">Arjun Mehta</strong>
                         <span class="text-slate-500 text-[11px]">Senior Developer</span>
@@ -296,21 +324,21 @@
                       <td class="py-3 px-3"><span class="bg-purple-50 text-purple-700 px-2 py-0.5 rounded text-[10px] font-semibold">Engineering</span></td>
                       <td class="py-3 px-3 font-medium">Claude Code</td>
                       <td class="py-3 px-3">
-                        <strong class="text-red-600">₹1,10,000</strong>
-                        <span class="text-slate-500 block text-[11px]">Limit was: ₹80,000</span>
+                        <strong class="text-red-600 block font-semibold person-spent">₹1,10,000</strong>
+                        <span class="text-slate-500 block text-[11px] person-limit" id="limit-Arjun-Mehta">Limit: ₹80,000</span>
                       </td>
                       <td class="py-3 px-3">
-                        <span class="bg-red-100 text-red-700 text-[11px] font-semibold px-2 py-0.5 rounded-full">Exceeded (Auto-Paused)</span>
+                        <span class="bg-red-100 text-red-700 text-[11px] font-semibold px-2 py-0.5 rounded-full person-status" id="status-Arjun-Mehta">Exceeded (Auto-Paused)</span>
                       </td>
                       <td class="py-3 px-3 text-right">
-                        <button onclick="openPersonLimitModal('Arjun Mehta', 'Engineering', 80000)" class="text-red-600 hover:underline font-semibold">
+                        <button onclick="openPersonLimitModal('Arjun Mehta', 'Engineering', 80000, 110000)" class="text-red-600 hover:underline font-semibold">
                           Reset / Unpause
                         </button>
                       </td>
                     </tr>
 
                     <!-- 3. Priya Sundaram -->
-                    <tr class="person-row hover:bg-slate-50" data-name="Priya Sundaram" data-team="Engineering">
+                    <tr class="person-row hover:bg-slate-50" data-name="Priya Sundaram" data-team="Engineering" id="row-Priya-Sundaram">
                       <td class="py-3 px-3">
                         <strong class="text-slate-900 block text-sm">Priya Sundaram</strong>
                         <span class="text-slate-500 text-[11px]">Fullstack Engineer</span>
@@ -318,21 +346,21 @@
                       <td class="py-3 px-3"><span class="bg-purple-50 text-purple-700 px-2 py-0.5 rounded text-[10px] font-semibold">Engineering</span></td>
                       <td class="py-3 px-3 font-medium">Claude Code</td>
                       <td class="py-3 px-3">
-                        <strong class="text-slate-900">₹38,000</strong>
-                        <span class="text-slate-500 block text-[11px]">Limit: ₹50,000</span>
+                        <strong class="text-slate-900 block font-semibold person-spent">₹38,000</strong>
+                        <span class="text-slate-500 block text-[11px] person-limit" id="limit-Priya-Sundaram">Limit: ₹50,000</span>
                       </td>
                       <td class="py-3 px-3">
-                        <span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full">Safe & Approved</span>
+                        <span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full person-status">Safe & Approved</span>
                       </td>
                       <td class="py-3 px-3 text-right">
-                        <button onclick="openPersonLimitModal('Priya Sundaram', 'Engineering', 50000)" class="text-slate-500 hover:text-slate-800">
+                        <button onclick="openPersonLimitModal('Priya Sundaram', 'Engineering', 50000, 38000)" class="text-slate-500 hover:text-slate-800">
                           Manage
                         </button>
                       </td>
                     </tr>
 
                     <!-- 4. Karthik Iyer -->
-                    <tr class="person-row hover:bg-slate-50" data-name="Karthik Iyer" data-team="Engineering">
+                    <tr class="person-row hover:bg-slate-50" data-name="Karthik Iyer" data-team="Engineering" id="row-Karthik-Iyer">
                       <td class="py-3 px-3">
                         <strong class="text-slate-900 block text-sm">Karthik Iyer</strong>
                         <span class="text-slate-500 text-[11px]">DevOps & Cloud Lead</span>
@@ -340,21 +368,21 @@
                       <td class="py-3 px-3"><span class="bg-purple-50 text-purple-700 px-2 py-0.5 rounded text-[10px] font-semibold">Engineering</span></td>
                       <td class="py-3 px-3 font-medium">Claude Code</td>
                       <td class="py-3 px-3">
-                        <strong class="text-slate-900">₹28,000</strong>
-                        <span class="text-slate-500 block text-[11px]">Limit: ₹40,000</span>
+                        <strong class="text-slate-900 block font-semibold person-spent">₹28,000</strong>
+                        <span class="text-slate-500 block text-[11px] person-limit" id="limit-Karthik-Iyer">Limit: ₹40,000</span>
                       </td>
                       <td class="py-3 px-3">
-                        <span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full">Safe & Approved</span>
+                        <span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full person-status">Safe & Approved</span>
                       </td>
                       <td class="py-3 px-3 text-right">
-                        <button onclick="openPersonLimitModal('Karthik Iyer', 'Engineering', 40000)" class="text-slate-500 hover:text-slate-800">
+                        <button onclick="openPersonLimitModal('Karthik Iyer', 'Engineering', 40000, 28000)" class="text-slate-500 hover:text-slate-800">
                           Manage
                         </button>
                       </td>
                     </tr>
 
                     <!-- 5. Neha Gupta -->
-                    <tr class="person-row hover:bg-slate-50" data-name="Neha Gupta" data-team="Engineering">
+                    <tr class="person-row hover:bg-slate-50" data-name="Neha Gupta" data-team="Engineering" id="row-Neha-Gupta">
                       <td class="py-3 px-3">
                         <strong class="text-slate-900 block text-sm">Neha Gupta</strong>
                         <span class="text-slate-500 text-[11px]">Backend Engineer</span>
@@ -362,21 +390,21 @@
                       <td class="py-3 px-3"><span class="bg-purple-50 text-purple-700 px-2 py-0.5 rounded text-[10px] font-semibold">Engineering</span></td>
                       <td class="py-3 px-3 font-medium">Claude Code</td>
                       <td class="py-3 px-3">
-                        <strong class="text-slate-900">₹24,000</strong>
-                        <span class="text-slate-500 block text-[11px]">Limit: ₹40,000</span>
+                        <strong class="text-slate-900 block font-semibold person-spent">₹24,000</strong>
+                        <span class="text-slate-500 block text-[11px] person-limit" id="limit-Neha-Gupta">Limit: ₹40,000</span>
                       </td>
                       <td class="py-3 px-3">
-                        <span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full">Safe & Approved</span>
+                        <span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full person-status">Safe & Approved</span>
                       </td>
                       <td class="py-3 px-3 text-right">
-                        <button onclick="openPersonLimitModal('Neha Gupta', 'Engineering', 40000)" class="text-slate-500 hover:text-slate-800">
+                        <button onclick="openPersonLimitModal('Neha Gupta', 'Engineering', 40000, 24000)" class="text-slate-500 hover:text-slate-800">
                           Manage
                         </button>
                       </td>
                     </tr>
 
                     <!-- 6. Aditya Kulkarni -->
-                    <tr class="person-row hover:bg-slate-50" data-name="Aditya Kulkarni" data-team="Engineering">
+                    <tr class="person-row hover:bg-slate-50" data-name="Aditya Kulkarni" data-team="Engineering" id="row-Aditya-Kulkarni">
                       <td class="py-3 px-3">
                         <strong class="text-slate-900 block text-sm">Aditya Kulkarni</strong>
                         <span class="text-slate-500 text-[11px]">Frontend Engineer</span>
@@ -384,21 +412,21 @@
                       <td class="py-3 px-3"><span class="bg-purple-50 text-purple-700 px-2 py-0.5 rounded text-[10px] font-semibold">Engineering</span></td>
                       <td class="py-3 px-3 font-medium">Claude Code</td>
                       <td class="py-3 px-3">
-                        <strong class="text-slate-900">₹19,000</strong>
-                        <span class="text-slate-500 block text-[11px]">Limit: ₹30,000</span>
+                        <strong class="text-slate-900 block font-semibold person-spent">₹19,000</strong>
+                        <span class="text-slate-500 block text-[11px] person-limit" id="limit-Aditya-Kulkarni">Limit: ₹30,000</span>
                       </td>
                       <td class="py-3 px-3">
-                        <span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full">Safe & Approved</span>
+                        <span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full person-status">Safe & Approved</span>
                       </td>
                       <td class="py-3 px-3 text-right">
-                        <button onclick="openPersonLimitModal('Aditya Kulkarni', 'Engineering', 30000)" class="text-slate-500 hover:text-slate-800">
+                        <button onclick="openPersonLimitModal('Aditya Kulkarni', 'Engineering', 30000, 19000)" class="text-slate-500 hover:text-slate-800">
                           Manage
                         </button>
                       </td>
                     </tr>
 
                     <!-- 7. Pooja Patel -->
-                    <tr class="person-row hover:bg-slate-50" data-name="Pooja Patel" data-team="Engineering">
+                    <tr class="person-row hover:bg-slate-50" data-name="Pooja Patel" data-team="Engineering" id="row-Pooja-Patel">
                       <td class="py-3 px-3">
                         <strong class="text-slate-900 block text-sm">Pooja Patel</strong>
                         <span class="text-slate-500 text-[11px]">QA Automation Eng</span>
@@ -406,199 +434,103 @@
                       <td class="py-3 px-3"><span class="bg-purple-50 text-purple-700 px-2 py-0.5 rounded text-[10px] font-semibold">Engineering</span></td>
                       <td class="py-3 px-3 font-medium">Claude Code</td>
                       <td class="py-3 px-3">
-                        <strong class="text-slate-900">₹12,000</strong>
-                        <span class="text-slate-500 block text-[11px]">Limit: ₹25,000</span>
+                        <strong class="text-slate-900 block font-semibold person-spent">₹12,000</strong>
+                        <span class="text-slate-500 block text-[11px] person-limit" id="limit-Pooja-Patel">Limit: ₹25,000</span>
                       </td>
                       <td class="py-3 px-3">
-                        <span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full">Safe & Approved</span>
+                        <span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full person-status">Safe & Approved</span>
                       </td>
                       <td class="py-3 px-3 text-right">
-                        <button onclick="openPersonLimitModal('Pooja Patel', 'Engineering', 25000)" class="text-slate-500 hover:text-slate-800">
+                        <button onclick="openPersonLimitModal('Pooja Patel', 'Engineering', 25000, 12000)" class="text-slate-500 hover:text-slate-800">
                           Manage
                         </button>
                       </td>
                     </tr>
 
                     <!-- 8. Manish Tiwari -->
-                    <tr class="person-row hover:bg-slate-50" data-name="Manish Tiwari" data-team="Engineering">
-                      <td class="py-3 px-3">
-                        <strong class="text-slate-900 block text-sm">Manish Tiwari</strong>
-                        <span class="text-slate-500 text-[11px]">Data Pipeline Dev</span>
-                      </td>
+                    <tr class="person-row hover:bg-slate-50" data-name="Manish Tiwari" data-team="Engineering" id="row-Manish-Tiwari">
+                      <td class="py-3 px-3"><strong class="text-slate-900 block text-sm">Manish Tiwari</strong><span class="text-slate-500 text-[11px]">Data Pipeline Dev</span></td>
                       <td class="py-3 px-3"><span class="bg-purple-50 text-purple-700 px-2 py-0.5 rounded text-[10px] font-semibold">Engineering</span></td>
                       <td class="py-3 px-3 font-medium">Claude Code</td>
-                      <td class="py-3 px-3">
-                        <strong class="text-slate-900">₹9,000</strong>
-                        <span class="text-slate-500 block text-[11px]">Limit: ₹25,000</span>
-                      </td>
-                      <td class="py-3 px-3">
-                        <span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full">Safe & Approved</span>
-                      </td>
-                      <td class="py-3 px-3 text-right">
-                        <button onclick="openPersonLimitModal('Manish Tiwari', 'Engineering', 25000)" class="text-slate-500 hover:text-slate-800">
-                          Manage
-                        </button>
-                      </td>
+                      <td class="py-3 px-3"><strong class="text-slate-900 block font-semibold person-spent">₹9,000</strong><span class="text-slate-500 block text-[11px] person-limit" id="limit-Manish-Tiwari">Limit: ₹25,000</span></td>
+                      <td class="py-3 px-3"><span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full person-status">Safe & Approved</span></td>
+                      <td class="py-3 px-3 text-right"><button onclick="openPersonLimitModal('Manish Tiwari', 'Engineering', 25000, 9000)" class="text-slate-500 hover:text-slate-800">Manage</button></td>
                     </tr>
 
                     <!-- 9. Divya Krishnan -->
-                    <tr class="person-row hover:bg-slate-50" data-name="Divya Krishnan" data-team="Engineering">
-                      <td class="py-3 px-3">
-                        <strong class="text-slate-900 block text-sm">Divya Krishnan</strong>
-                        <span class="text-slate-500 text-[11px]">App Security Engineer</span>
-                      </td>
+                    <tr class="person-row hover:bg-slate-50" data-name="Divya Krishnan" data-team="Engineering" id="row-Divya-Krishnan">
+                      <td class="py-3 px-3"><strong class="text-slate-900 block text-sm">Divya Krishnan</strong><span class="text-slate-500 text-[11px]">App Security Engineer</span></td>
                       <td class="py-3 px-3"><span class="bg-purple-50 text-purple-700 px-2 py-0.5 rounded text-[10px] font-semibold">Engineering</span></td>
                       <td class="py-3 px-3 font-medium">Claude Code</td>
-                      <td class="py-3 px-3">
-                        <strong class="text-slate-900">₹8,500</strong>
-                        <span class="text-slate-500 block text-[11px]">Limit: ₹20,000</span>
-                      </td>
-                      <td class="py-3 px-3">
-                        <span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full">Safe & Approved</span>
-                      </td>
-                      <td class="py-3 px-3 text-right">
-                        <button onclick="openPersonLimitModal('Divya Krishnan', 'Engineering', 20000)" class="text-slate-500 hover:text-slate-800">
-                          Manage
-                        </button>
-                      </td>
+                      <td class="py-3 px-3"><strong class="text-slate-900 block font-semibold person-spent">₹8,500</strong><span class="text-slate-500 block text-[11px] person-limit" id="limit-Divya-Krishnan">Limit: ₹20,000</span></td>
+                      <td class="py-3 px-3"><span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full person-status">Safe & Approved</span></td>
+                      <td class="py-3 px-3 text-right"><button onclick="openPersonLimitModal('Divya Krishnan', 'Engineering', 20000, 8500)" class="text-slate-500 hover:text-slate-800">Manage</button></td>
                     </tr>
 
                     <!-- 10. Rahul Deshmukh -->
-                    <tr class="person-row hover:bg-slate-50" data-name="Rahul Deshmukh" data-team="Engineering">
-                      <td class="py-3 px-3">
-                        <strong class="text-slate-900 block text-sm">Rahul Deshmukh</strong>
-                        <span class="text-slate-500 text-[11px]">Systems Engineer</span>
-                      </td>
+                    <tr class="person-row hover:bg-slate-50" data-name="Rahul Deshmukh" data-team="Engineering" id="row-Rahul-Deshmukh">
+                      <td class="py-3 px-3"><strong class="text-slate-900 block text-sm">Rahul Deshmukh</strong><span class="text-slate-500 text-[11px]">Systems Engineer</span></td>
                       <td class="py-3 px-3"><span class="bg-purple-50 text-purple-700 px-2 py-0.5 rounded text-[10px] font-semibold">Engineering</span></td>
                       <td class="py-3 px-3 font-medium">Claude Code</td>
-                      <td class="py-3 px-3">
-                        <strong class="text-slate-900">₹7,200</strong>
-                        <span class="text-slate-500 block text-[11px]">Limit: ₹20,000</span>
-                      </td>
-                      <td class="py-3 px-3">
-                        <span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full">Safe & Approved</span>
-                      </td>
-                      <td class="py-3 px-3 text-right">
-                        <button onclick="openPersonLimitModal('Rahul Deshmukh', 'Engineering', 20000)" class="text-slate-500 hover:text-slate-800">
-                          Manage
-                        </button>
-                      </td>
+                      <td class="py-3 px-3"><strong class="text-slate-900 block font-semibold person-spent">₹7,200</strong><span class="text-slate-500 block text-[11px] person-limit" id="limit-Rahul-Deshmukh">Limit: ₹20,000</span></td>
+                      <td class="py-3 px-3"><span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full person-status">Safe & Approved</span></td>
+                      <td class="py-3 px-3 text-right"><button onclick="openPersonLimitModal('Rahul Deshmukh', 'Engineering', 20000, 7200)" class="text-slate-500 hover:text-slate-800">Manage</button></td>
                     </tr>
 
                     <!-- 11. Ankit Saxena -->
-                    <tr class="person-row hover:bg-slate-50" data-name="Ankit Saxena" data-team="Engineering">
-                      <td class="py-3 px-3">
-                        <strong class="text-slate-900 block text-sm">Ankit Saxena</strong>
-                        <span class="text-slate-500 text-[11px]">Mobile App Developer</span>
-                      </td>
+                    <tr class="person-row hover:bg-slate-50" data-name="Ankit Saxena" data-team="Engineering" id="row-Ankit-Saxena">
+                      <td class="py-3 px-3"><strong class="text-slate-900 block text-sm">Ankit Saxena</strong><span class="text-slate-500 text-[11px]">Mobile App Developer</span></td>
                       <td class="py-3 px-3"><span class="bg-purple-50 text-purple-700 px-2 py-0.5 rounded text-[10px] font-semibold">Engineering</span></td>
                       <td class="py-3 px-3 font-medium">Claude Code</td>
-                      <td class="py-3 px-3">
-                        <strong class="text-slate-900">₹6,500</strong>
-                        <span class="text-slate-500 block text-[11px]">Limit: ₹20,000</span>
-                      </td>
-                      <td class="py-3 px-3">
-                        <span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full">Safe & Approved</span>
-                      </td>
-                      <td class="py-3 px-3 text-right">
-                        <button onclick="openPersonLimitModal('Ankit Saxena', 'Engineering', 20000)" class="text-slate-500 hover:text-slate-800">
-                          Manage
-                        </button>
-                      </td>
+                      <td class="py-3 px-3"><strong class="text-slate-900 block font-semibold person-spent">₹6,500</strong><span class="text-slate-500 block text-[11px] person-limit" id="limit-Ankit-Saxena">Limit: ₹20,000</span></td>
+                      <td class="py-3 px-3"><span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full person-status">Safe & Approved</span></td>
+                      <td class="py-3 px-3 text-right"><button onclick="openPersonLimitModal('Ankit Saxena', 'Engineering', 20000, 6500)" class="text-slate-500 hover:text-slate-800">Manage</button></td>
                     </tr>
 
                     <!-- 12. Swati Reddy -->
-                    <tr class="person-row hover:bg-slate-50" data-name="Swati Reddy" data-team="Engineering">
-                      <td class="py-3 px-3">
-                        <strong class="text-slate-900 block text-sm">Swati Reddy</strong>
-                        <span class="text-slate-500 text-[11px]">Platform Engineer</span>
-                      </td>
+                    <tr class="person-row hover:bg-slate-50" data-name="Swati Reddy" data-team="Engineering" id="row-Swati-Reddy">
+                      <td class="py-3 px-3"><strong class="text-slate-900 block text-sm">Swati Reddy</strong><span class="text-slate-500 text-[11px]">Platform Engineer</span></td>
                       <td class="py-3 px-3"><span class="bg-purple-50 text-purple-700 px-2 py-0.5 rounded text-[10px] font-semibold">Engineering</span></td>
                       <td class="py-3 px-3 font-medium">Claude Code</td>
-                      <td class="py-3 px-3">
-                        <strong class="text-slate-900">₹5,800</strong>
-                        <span class="text-slate-500 block text-[11px]">Limit: ₹20,000</span>
-                      </td>
-                      <td class="py-3 px-3">
-                        <span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full">Safe & Approved</span>
-                      </td>
-                      <td class="py-3 px-3 text-right">
-                        <button onclick="openPersonLimitModal('Swati Reddy', 'Engineering', 20000)" class="text-slate-500 hover:text-slate-800">
-                          Manage
-                        </button>
-                      </td>
+                      <td class="py-3 px-3"><strong class="text-slate-900 block font-semibold person-spent">₹5,800</strong><span class="text-slate-500 block text-[11px] person-limit" id="limit-Swati-Reddy">Limit: ₹20,000</span></td>
+                      <td class="py-3 px-3"><span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full person-status">Safe & Approved</span></td>
+                      <td class="py-3 px-3 text-right"><button onclick="openPersonLimitModal('Swati Reddy', 'Engineering', 20000, 5800)" class="text-slate-500 hover:text-slate-800">Manage</button></td>
                     </tr>
 
                     <!-- 13. Gaurav Joshi -->
-                    <tr class="person-row hover:bg-slate-50" data-name="Gaurav Joshi" data-team="Engineering">
-                      <td class="py-3 px-3">
-                        <strong class="text-slate-900 block text-sm">Gaurav Joshi</strong>
-                        <span class="text-slate-500 text-[11px]">Junior Developer</span>
-                      </td>
+                    <tr class="person-row hover:bg-slate-50" data-name="Gaurav Joshi" data-team="Engineering" id="row-Gaurav-Joshi">
+                      <td class="py-3 px-3"><strong class="text-slate-900 block text-sm">Gaurav Joshi</strong><span class="text-slate-500 text-[11px]">Junior Developer</span></td>
                       <td class="py-3 px-3"><span class="bg-purple-50 text-purple-700 px-2 py-0.5 rounded text-[10px] font-semibold">Engineering</span></td>
                       <td class="py-3 px-3 font-medium">Claude Code</td>
-                      <td class="py-3 px-3">
-                        <strong class="text-slate-900">₹4,200</strong>
-                        <span class="text-slate-500 block text-[11px]">Limit: ₹15,000</span>
-                      </td>
-                      <td class="py-3 px-3">
-                        <span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full">Safe & Approved</span>
-                      </td>
-                      <td class="py-3 px-3 text-right">
-                        <button onclick="openPersonLimitModal('Gaurav Joshi', 'Engineering', 15000)" class="text-slate-500 hover:text-slate-800">
-                          Manage
-                        </button>
-                      </td>
+                      <td class="py-3 px-3"><strong class="text-slate-900 block font-semibold person-spent">₹4,200</strong><span class="text-slate-500 block text-[11px] person-limit" id="limit-Gaurav-Joshi">Limit: ₹15,000</span></td>
+                      <td class="py-3 px-3"><span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full person-status">Safe & Approved</span></td>
+                      <td class="py-3 px-3 text-right"><button onclick="openPersonLimitModal('Gaurav Joshi', 'Engineering', 15000, 4200)" class="text-slate-500 hover:text-slate-800">Manage</button></td>
                     </tr>
 
                     <!-- 14. Meera Nambiar -->
-                    <tr class="person-row hover:bg-slate-50" data-name="Meera Nambiar" data-team="Engineering">
-                      <td class="py-3 px-3">
-                        <strong class="text-slate-900 block text-sm">Meera Nambiar</strong>
-                        <span class="text-slate-500 text-[11px]">ML / AI Developer</span>
-                      </td>
+                    <tr class="person-row hover:bg-slate-50" data-name="Meera Nambiar" data-team="Engineering" id="row-Meera-Nambiar">
+                      <td class="py-3 px-3"><strong class="text-slate-900 block text-sm">Meera Nambiar</strong><span class="text-slate-500 text-[11px]">ML / AI Developer</span></td>
                       <td class="py-3 px-3"><span class="bg-purple-50 text-purple-700 px-2 py-0.5 rounded text-[10px] font-semibold">Engineering</span></td>
                       <td class="py-3 px-3 font-medium">Claude Code</td>
-                      <td class="py-3 px-3">
-                        <strong class="text-slate-900">₹3,800</strong>
-                        <span class="text-slate-500 block text-[11px]">Limit: ₹15,000</span>
-                      </td>
-                      <td class="py-3 px-3">
-                        <span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full">Safe & Approved</span>
-                      </td>
-                      <td class="py-3 px-3 text-right">
-                        <button onclick="openPersonLimitModal('Meera Nambiar', 'Engineering', 15000)" class="text-slate-500 hover:text-slate-800">
-                          Manage
-                        </button>
-                      </td>
+                      <td class="py-3 px-3"><strong class="text-slate-900 block font-semibold person-spent">₹3,800</strong><span class="text-slate-500 block text-[11px] person-limit" id="limit-Meera-Nambiar">Limit: ₹15,000</span></td>
+                      <td class="py-3 px-3"><span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full person-status">Safe & Approved</span></td>
+                      <td class="py-3 px-3 text-right"><button onclick="openPersonLimitModal('Meera Nambiar', 'Engineering', 15000, 3800)" class="text-slate-500 hover:text-slate-800">Manage</button></td>
                     </tr>
 
                     <!-- 15. Siddharth Jain -->
-                    <tr class="person-row hover:bg-slate-50" data-name="Siddharth Jain" data-team="Engineering">
-                      <td class="py-3 px-3">
-                        <strong class="text-slate-900 block text-sm">Siddharth Jain</strong>
-                        <span class="text-slate-500 text-[11px]">Cloud Infra Associate</span>
-                      </td>
+                    <tr class="person-row hover:bg-slate-50" data-name="Siddharth Jain" data-team="Engineering" id="row-Siddharth-Jain">
+                      <td class="py-3 px-3"><strong class="text-slate-900 block text-sm">Siddharth Jain</strong><span class="text-slate-500 text-[11px]">Cloud Infra Associate</span></td>
                       <td class="py-3 px-3"><span class="bg-purple-50 text-purple-700 px-2 py-0.5 rounded text-[10px] font-semibold">Engineering</span></td>
                       <td class="py-3 px-3 font-medium">Claude Code</td>
-                      <td class="py-3 px-3">
-                        <strong class="text-slate-900">₹3,000</strong>
-                        <span class="text-slate-500 block text-[11px]">Limit: ₹15,000</span>
-                      </td>
-                      <td class="py-3 px-3">
-                        <span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full">Safe & Approved</span>
-                      </td>
-                      <td class="py-3 px-3 text-right">
-                        <button onclick="openPersonLimitModal('Siddharth Jain', 'Engineering', 15000)" class="text-slate-500 hover:text-slate-800">
-                          Manage
-                        </button>
-                      </td>
+                      <td class="py-3 px-3"><strong class="text-slate-900 block font-semibold person-spent">₹3,000</strong><span class="text-slate-500 block text-[11px] person-limit" id="limit-Siddharth-Jain">Limit: ₹15,000</span></td>
+                      <td class="py-3 px-3"><span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full person-status">Safe & Approved</span></td>
+                      <td class="py-3 px-3 text-right"><button onclick="openPersonLimitModal('Siddharth Jain', 'Engineering', 15000, 3000)" class="text-slate-500 hover:text-slate-800">Manage</button></td>
                     </tr>
 
                     <!-- ================= SALES TEAM (10 MEMBERS) ================= -->
                     
                     <!-- 16. Sneha Rao -->
-                    <tr class="person-row hover:bg-amber-50/40 bg-amber-50/20" data-name="Sneha Rao" data-team="Sales">
+                    <tr class="person-row hover:bg-amber-50/40 bg-amber-50/20" data-name="Sneha Rao" data-team="Sales" id="row-Sneha-Rao">
                       <td class="py-3 px-3">
                         <strong class="text-slate-900 block text-sm">Sneha Rao</strong>
                         <span class="text-slate-500 text-[11px]">Account Executive</span>
@@ -609,21 +541,21 @@
                         <span class="block text-[10px] text-slate-500">Used company laptop</span>
                       </td>
                       <td class="py-3 px-3">
-                        <strong class="text-slate-900">₹2,000</strong>
-                        <span class="text-slate-500 block text-[11px]">Billed to personal card</span>
+                        <strong class="text-slate-900 block font-semibold person-spent">₹2,000</strong>
+                        <span class="text-slate-500 block text-[11px] person-limit" id="limit-Sneha-Rao">Billed to personal card</span>
                       </td>
                       <td class="py-3 px-3">
-                        <span class="bg-red-100 text-red-700 text-[11px] font-semibold px-2 py-0.5 rounded-full">Unapproved Tool</span>
+                        <span class="bg-red-100 text-red-700 text-[11px] font-semibold px-2 py-0.5 rounded-full person-status">Unapproved Tool</span>
                       </td>
                       <td class="py-3 px-3 text-right">
-                        <button onclick="alert('Sent company ChatGPT login link to Sneha Rao.')" class="text-blue-600 hover:underline font-semibold">
+                        <button onclick="showToast('Invited Sneha Rao to official company ChatGPT Enterprise seat via Okta.')" class="text-blue-600 hover:underline font-semibold">
                           Give Company Account
                         </button>
                       </td>
                     </tr>
 
                     <!-- 17. Ananya Verma -->
-                    <tr class="person-row hover:bg-slate-50" data-name="Ananya Verma" data-team="Sales">
+                    <tr class="person-row hover:bg-slate-50" data-name="Ananya Verma" data-team="Sales" id="row-Ananya-Verma">
                       <td class="py-3 px-3">
                         <strong class="text-slate-900 block text-sm">Ananya Verma</strong>
                         <span class="text-slate-500 text-[11px]">Sales Director</span>
@@ -631,205 +563,199 @@
                       <td class="py-3 px-3"><span class="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded text-[10px] font-semibold">Sales</span></td>
                       <td class="py-3 px-3 font-medium">ChatGPT Enterprise</td>
                       <td class="py-3 px-3">
-                        <strong class="text-slate-900">₹40,000</strong>
-                        <span class="text-slate-500 block text-[11px]">Limit: ₹50,000</span>
+                        <strong class="text-slate-900 block font-semibold person-spent">₹40,000</strong>
+                        <span class="text-slate-500 block text-[11px] person-limit" id="limit-Ananya-Verma">Limit: ₹50,000</span>
                       </td>
                       <td class="py-3 px-3">
-                        <span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full">Safe & Approved</span>
+                        <span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full person-status">Safe & Approved</span>
                       </td>
                       <td class="py-3 px-3 text-right">
-                        <button onclick="openPersonLimitModal('Ananya Verma', 'Sales', 50000)" class="text-slate-500 hover:text-slate-800">Manage</button>
+                        <button onclick="openPersonLimitModal('Ananya Verma', 'Sales', 50000, 40000)" class="text-slate-500 hover:text-slate-800">Manage</button>
                       </td>
                     </tr>
 
                     <!-- 18. Rohit Verma -->
-                    <tr class="person-row hover:bg-slate-50" data-name="Rohit Verma" data-team="Sales">
-                      <td class="py-3 px-3">
-                        <strong class="text-slate-900 block text-sm">Rohit Verma</strong>
-                        <span class="text-slate-500 text-[11px]">Senior Account Executive</span>
-                      </td>
+                    <tr class="person-row hover:bg-slate-50" data-name="Rohit Verma" data-team="Sales" id="row-Rohit-Verma">
+                      <td class="py-3 px-3"><strong class="text-slate-900 block text-sm">Rohit Verma</strong><span class="text-slate-500 text-[11px]">Senior Account Executive</span></td>
                       <td class="py-3 px-3"><span class="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded text-[10px] font-semibold">Sales</span></td>
                       <td class="py-3 px-3 font-medium">ChatGPT Enterprise</td>
-                      <td class="py-3 px-3">
-                        <strong class="text-slate-900">₹32,000</strong>
-                        <span class="text-slate-500 block text-[11px]">Limit: ₹40,000</span>
-                      </td>
-                      <td class="py-3 px-3"><span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full">Safe & Approved</span></td>
-                      <td class="py-3 px-3 text-right"><button onclick="openPersonLimitModal('Rohit Verma', 'Sales', 40000)" class="text-slate-500 hover:text-slate-800">Manage</button></td>
+                      <td class="py-3 px-3"><strong class="text-slate-900 block font-semibold person-spent">₹32,000</strong><span class="text-slate-500 block text-[11px] person-limit" id="limit-Rohit-Verma">Limit: ₹40,000</span></td>
+                      <td class="py-3 px-3"><span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full person-status">Safe & Approved</span></td>
+                      <td class="py-3 px-3 text-right"><button onclick="openPersonLimitModal('Rohit Verma', 'Sales', 40000, 32000)" class="text-slate-500 hover:text-slate-800">Manage</button></td>
                     </tr>
 
                     <!-- 19. Kavita Nair -->
-                    <tr class="person-row hover:bg-slate-50" data-name="Kavita Nair" data-team="Sales">
+                    <tr class="person-row hover:bg-slate-50" data-name="Kavita Nair" data-team="Sales" id="row-Kavita-Nair">
                       <td class="py-3 px-3"><strong class="text-slate-900 block text-sm">Kavita Nair</strong><span class="text-slate-500 text-[11px]">Enterprise AE</span></td>
                       <td class="py-3 px-3"><span class="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded text-[10px] font-semibold">Sales</span></td>
                       <td class="py-3 px-3 font-medium">ChatGPT Enterprise</td>
-                      <td class="py-3 px-3"><strong class="text-slate-900">₹29,000</strong><span class="text-slate-500 block text-[11px]">Limit: ₹40,000</span></td>
-                      <td class="py-3 px-3"><span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full">Safe & Approved</span></td>
-                      <td class="py-3 px-3 text-right"><button onclick="openPersonLimitModal('Kavita Nair', 'Sales', 40000)" class="text-slate-500 hover:text-slate-800">Manage</button></td>
+                      <td class="py-3 px-3"><strong class="text-slate-900 block font-semibold person-spent">₹29,000</strong><span class="text-slate-500 block text-[11px] person-limit" id="limit-Kavita-Nair">Limit: ₹40,000</span></td>
+                      <td class="py-3 px-3"><span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full person-status">Safe & Approved</span></td>
+                      <td class="py-3 px-3 text-right"><button onclick="openPersonLimitModal('Kavita Nair', 'Sales', 40000, 29000)" class="text-slate-500 hover:text-slate-800">Manage</button></td>
                     </tr>
 
                     <!-- 20. Deepak Chopra -->
-                    <tr class="person-row hover:bg-slate-50" data-name="Deepak Chopra" data-team="Sales">
+                    <tr class="person-row hover:bg-slate-50" data-name="Deepak Chopra" data-team="Sales" id="row-Deepak-Chopra">
                       <td class="py-3 px-3"><strong class="text-slate-900 block text-sm">Deepak Chopra</strong><span class="text-slate-500 text-[11px]">RFP Specialist</span></td>
                       <td class="py-3 px-3"><span class="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded text-[10px] font-semibold">Sales</span></td>
                       <td class="py-3 px-3 font-medium">ChatGPT Enterprise</td>
-                      <td class="py-3 px-3"><strong class="text-slate-900">₹26,000</strong><span class="text-slate-500 block text-[11px]">Limit: ₹35,000</span></td>
-                      <td class="py-3 px-3"><span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full">Safe & Approved</span></td>
-                      <td class="py-3 px-3 text-right"><button onclick="openPersonLimitModal('Deepak Chopra', 'Sales', 35000)" class="text-slate-500 hover:text-slate-800">Manage</button></td>
+                      <td class="py-3 px-3"><strong class="text-slate-900 block font-semibold person-spent">₹26,000</strong><span class="text-slate-500 block text-[11px] person-limit" id="limit-Deepak-Chopra">Limit: ₹35,000</span></td>
+                      <td class="py-3 px-3"><span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full person-status">Safe & Approved</span></td>
+                      <td class="py-3 px-3 text-right"><button onclick="openPersonLimitModal('Deepak Chopra', 'Sales', 35000, 26000)" class="text-slate-500 hover:text-slate-800">Manage</button></td>
                     </tr>
 
                     <!-- 21. Ritu Shah -->
-                    <tr class="person-row hover:bg-slate-50" data-name="Ritu Shah" data-team="Sales">
+                    <tr class="person-row hover:bg-slate-50" data-name="Ritu Shah" data-team="Sales" id="row-Ritu-Shah">
                       <td class="py-3 px-3"><strong class="text-slate-900 block text-sm">Ritu Shah</strong><span class="text-slate-500 text-[11px]">Business Dev Lead</span></td>
                       <td class="py-3 px-3"><span class="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded text-[10px] font-semibold">Sales</span></td>
                       <td class="py-3 px-3 font-medium">ChatGPT Enterprise</td>
-                      <td class="py-3 px-3"><strong class="text-slate-900">₹22,000</strong><span class="text-slate-500 block text-[11px]">Limit: ₹30,000</span></td>
-                      <td class="py-3 px-3"><span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full">Safe & Approved</span></td>
-                      <td class="py-3 px-3 text-right"><button onclick="openPersonLimitModal('Ritu Shah', 'Sales', 30000)" class="text-slate-500 hover:text-slate-800">Manage</button></td>
+                      <td class="py-3 px-3"><strong class="text-slate-900 block font-semibold person-spent">₹22,000</strong><span class="text-slate-500 block text-[11px] person-limit" id="limit-Ritu-Shah">Limit: ₹30,000</span></td>
+                      <td class="py-3 px-3"><span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full person-status">Safe & Approved</span></td>
+                      <td class="py-3 px-3 text-right"><button onclick="openPersonLimitModal('Ritu Shah', 'Sales', 30000, 22000)" class="text-slate-500 hover:text-slate-800">Manage</button></td>
                     </tr>
 
                     <!-- 22. Sanjay Singhania -->
-                    <tr class="person-row hover:bg-slate-50" data-name="Sanjay Singhania" data-team="Sales">
+                    <tr class="person-row hover:bg-slate-50" data-name="Sanjay Singhania" data-team="Sales" id="row-Sanjay-Singhania">
                       <td class="py-3 px-3"><strong class="text-slate-900 block text-sm">Sanjay Singhania</strong><span class="text-slate-500 text-[11px]">Sales Ops Analyst</span></td>
                       <td class="py-3 px-3"><span class="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded text-[10px] font-semibold">Sales</span></td>
                       <td class="py-3 px-3 font-medium">ChatGPT Enterprise</td>
-                      <td class="py-3 px-3"><strong class="text-slate-900">₹19,000</strong><span class="text-slate-500 block text-[11px]">Limit: ₹30,000</span></td>
-                      <td class="py-3 px-3"><span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full">Safe & Approved</span></td>
-                      <td class="py-3 px-3 text-right"><button onclick="openPersonLimitModal('Sanjay Singhania', 'Sales', 30000)" class="text-slate-500 hover:text-slate-800">Manage</button></td>
+                      <td class="py-3 px-3"><strong class="text-slate-900 block font-semibold person-spent">₹19,000</strong><span class="text-slate-500 block text-[11px] person-limit" id="limit-Sanjay-Singhania">Limit: ₹30,000</span></td>
+                      <td class="py-3 px-3"><span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full person-status">Safe & Approved</span></td>
+                      <td class="py-3 px-3 text-right"><button onclick="openPersonLimitModal('Sanjay Singhania', 'Sales', 30000, 19000)" class="text-slate-500 hover:text-slate-800">Manage</button></td>
                     </tr>
 
                     <!-- 23. Alok Pandey -->
-                    <tr class="person-row hover:bg-slate-50" data-name="Alok Pandey" data-team="Sales">
+                    <tr class="person-row hover:bg-slate-50" data-name="Alok Pandey" data-team="Sales" id="row-Alok-Pandey">
                       <td class="py-3 px-3"><strong class="text-slate-900 block text-sm">Alok Pandey</strong><span class="text-slate-500 text-[11px]">Customer Success Lead</span></td>
                       <td class="py-3 px-3"><span class="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded text-[10px] font-semibold">Sales</span></td>
                       <td class="py-3 px-3 font-medium">ChatGPT Enterprise</td>
-                      <td class="py-3 px-3"><strong class="text-slate-900">₹18,000</strong><span class="text-slate-500 block text-[11px]">Limit: ₹25,000</span></td>
-                      <td class="py-3 px-3"><span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full">Safe & Approved</span></td>
-                      <td class="py-3 px-3 text-right"><button onclick="openPersonLimitModal('Alok Pandey', 'Sales', 25000)" class="text-slate-500 hover:text-slate-800">Manage</button></td>
+                      <td class="py-3 px-3"><strong class="text-slate-900 block font-semibold person-spent">₹18,000</strong><span class="text-slate-500 block text-[11px] person-limit" id="limit-Alok-Pandey">Limit: ₹25,000</span></td>
+                      <td class="py-3 px-3"><span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full person-status">Safe & Approved</span></td>
+                      <td class="py-3 px-3 text-right"><button onclick="openPersonLimitModal('Alok Pandey', 'Sales', 25000, 18000)" class="text-slate-500 hover:text-slate-800">Manage</button></td>
                     </tr>
 
                     <!-- 24. Tanya Batra -->
-                    <tr class="person-row hover:bg-slate-50" data-name="Tanya Batra" data-team="Sales">
+                    <tr class="person-row hover:bg-slate-50" data-name="Tanya Batra" data-team="Sales" id="row-Tanya-Batra">
                       <td class="py-3 px-3"><strong class="text-slate-900 block text-sm">Tanya Batra</strong><span class="text-slate-500 text-[11px]">Inside Sales AE</span></td>
                       <td class="py-3 px-3"><span class="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded text-[10px] font-semibold">Sales</span></td>
                       <td class="py-3 px-3 font-medium">ChatGPT Enterprise</td>
-                      <td class="py-3 px-3"><strong class="text-slate-900">₹16,000</strong><span class="text-slate-500 block text-[11px]">Limit: ₹25,000</span></td>
-                      <td class="py-3 px-3"><span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full">Safe & Approved</span></td>
-                      <td class="py-3 px-3 text-right"><button onclick="openPersonLimitModal('Tanya Batra', 'Sales', 25000)" class="text-slate-500 hover:text-slate-800">Manage</button></td>
+                      <td class="py-3 px-3"><strong class="text-slate-900 block font-semibold person-spent">₹16,000</strong><span class="text-slate-500 block text-[11px] person-limit" id="limit-Tanya-Batra">Limit: ₹25,000</span></td>
+                      <td class="py-3 px-3"><span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full person-status">Safe & Approved</span></td>
+                      <td class="py-3 px-3 text-right"><button onclick="openPersonLimitModal('Tanya Batra', 'Sales', 25000, 16000)" class="text-slate-500 hover:text-slate-800">Manage</button></td>
                     </tr>
 
                     <!-- 25. Harsh Vardhan -->
-                    <tr class="person-row hover:bg-slate-50" data-name="Harsh Vardhan" data-team="Sales">
+                    <tr class="person-row hover:bg-slate-50" data-name="Harsh Vardhan" data-team="Sales" id="row-Harsh-Vardhan">
                       <td class="py-3 px-3"><strong class="text-slate-900 block text-sm">Harsh Vardhan</strong><span class="text-slate-500 text-[11px]">SDR Associate</span></td>
                       <td class="py-3 px-3"><span class="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded text-[10px] font-semibold">Sales</span></td>
                       <td class="py-3 px-3 font-medium">ChatGPT Enterprise</td>
-                      <td class="py-3 px-3"><strong class="text-slate-900">₹11,000</strong><span class="text-slate-500 block text-[11px]">Limit: ₹20,000</span></td>
-                      <td class="py-3 px-3"><span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full">Safe & Approved</span></td>
-                      <td class="py-3 px-3 text-right"><button onclick="openPersonLimitModal('Harsh Vardhan', 'Sales', 20000)" class="text-slate-500 hover:text-slate-800">Manage</button></td>
+                      <td class="py-3 px-3"><strong class="text-slate-900 block font-semibold person-spent">₹11,000</strong><span class="text-slate-500 block text-[11px] person-limit" id="limit-Harsh-Vardhan">Limit: ₹20,000</span></td>
+                      <td class="py-3 px-3"><span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full person-status">Safe & Approved</span></td>
+                      <td class="py-3 px-3 text-right"><button onclick="openPersonLimitModal('Harsh Vardhan', 'Sales', 20000, 11000)" class="text-slate-500 hover:text-slate-800">Manage</button></td>
                     </tr>
 
                     <!-- ================= DESIGN TEAM (6 MEMBERS) ================= -->
                     
                     <!-- 26. Priya Nair -->
-                    <tr class="person-row hover:bg-slate-50" data-name="Priya Nair" data-team="Design">
+                    <tr class="person-row hover:bg-slate-50" data-name="Priya Nair" data-team="Design" id="row-Priya-Nair">
                       <td class="py-3 px-3"><strong class="text-slate-900 block text-sm">Priya Nair</strong><span class="text-slate-500 text-[11px]">Lead UX Designer</span></td>
                       <td class="py-3 px-3"><span class="bg-pink-50 text-pink-700 px-2 py-0.5 rounded text-[10px] font-semibold">Design</span></td>
                       <td class="py-3 px-3 font-medium">Figma AI</td>
-                      <td class="py-3 px-3"><strong class="text-slate-900">₹35,000</strong><span class="text-slate-500 block text-[11px]">Monthly seat allocation</span></td>
-                      <td class="py-3 px-3"><span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full">Safe & Approved</span></td>
-                      <td class="py-3 px-3 text-right"><button onclick="openPersonLimitModal('Priya Nair', 'Design', 35000)" class="text-slate-500 hover:text-slate-800">Manage</button></td>
+                      <td class="py-3 px-3"><strong class="text-slate-900 block font-semibold person-spent">₹35,000</strong><span class="text-slate-500 block text-[11px] person-limit" id="limit-Priya-Nair">Monthly seat allocation</span></td>
+                      <td class="py-3 px-3"><span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full person-status">Safe & Approved</span></td>
+                      <td class="py-3 px-3 text-right"><button onclick="openPersonLimitModal('Priya Nair', 'Design', 35000, 35000)" class="text-slate-500 hover:text-slate-800">Manage</button></td>
                     </tr>
 
                     <!-- 27. Tanvi Joshi -->
-                    <tr class="person-row hover:bg-slate-50" data-name="Tanvi Joshi" data-team="Design">
+                    <tr class="person-row hover:bg-slate-50" data-name="Tanvi Joshi" data-team="Design" id="row-Tanvi-Joshi">
                       <td class="py-3 px-3"><strong class="text-slate-900 block text-sm">Tanvi Joshi</strong><span class="text-slate-500 text-[11px]">Senior UI Designer</span></td>
                       <td class="py-3 px-3"><span class="bg-pink-50 text-pink-700 px-2 py-0.5 rounded text-[10px] font-semibold">Design</span></td>
                       <td class="py-3 px-3 font-medium">Figma AI</td>
-                      <td class="py-3 px-3"><strong class="text-slate-900">₹26,000</strong><span class="text-slate-500 block text-[11px]">Monthly seat allocation</span></td>
-                      <td class="py-3 px-3"><span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full">Safe & Approved</span></td>
-                      <td class="py-3 px-3 text-right"><button onclick="openPersonLimitModal('Tanvi Joshi', 'Design', 30000)" class="text-slate-500 hover:text-slate-800">Manage</button></td>
+                      <td class="py-3 px-3"><strong class="text-slate-900 block font-semibold person-spent">₹26,000</strong><span class="text-slate-500 block text-[11px] person-limit" id="limit-Tanvi-Joshi">Monthly seat allocation</span></td>
+                      <td class="py-3 px-3"><span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full person-status">Safe & Approved</span></td>
+                      <td class="py-3 px-3 text-right"><button onclick="openPersonLimitModal('Tanvi Joshi', 'Design', 30000, 26000)" class="text-slate-500 hover:text-slate-800">Manage</button></td>
                     </tr>
 
                     <!-- 28. Kunal Bose -->
-                    <tr class="person-row hover:bg-slate-50" data-name="Kunal Bose" data-team="Design">
+                    <tr class="person-row hover:bg-slate-50" data-name="Kunal Bose" data-team="Design" id="row-Kunal-Bose">
                       <td class="py-3 px-3"><strong class="text-slate-900 block text-sm">Kunal Bose</strong><span class="text-slate-500 text-[11px]">Product Designer</span></td>
                       <td class="py-3 px-3"><span class="bg-pink-50 text-pink-700 px-2 py-0.5 rounded text-[10px] font-semibold">Design</span></td>
                       <td class="py-3 px-3 font-medium">Figma AI</td>
-                      <td class="py-3 px-3"><strong class="text-slate-900">₹24,000</strong><span class="text-slate-500 block text-[11px]">Monthly seat allocation</span></td>
-                      <td class="py-3 px-3"><span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full">Safe & Approved</span></td>
-                      <td class="py-3 px-3 text-right"><button onclick="openPersonLimitModal('Kunal Bose', 'Design', 30000)" class="text-slate-500 hover:text-slate-800">Manage</button></td>
+                      <td class="py-3 px-3"><strong class="text-slate-900 block font-semibold person-spent">₹24,000</strong><span class="text-slate-500 block text-[11px] person-limit" id="limit-Kunal-Bose">Monthly seat allocation</span></td>
+                      <td class="py-3 px-3"><span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full person-status">Safe & Approved</span></td>
+                      <td class="py-3 px-3 text-right"><button onclick="openPersonLimitModal('Kunal Bose', 'Design', 30000, 24000)" class="text-slate-500 hover:text-slate-800">Manage</button></td>
                     </tr>
 
                     <!-- 29. Simran Kaur -->
-                    <tr class="person-row hover:bg-slate-50" data-name="Simran Kaur" data-team="Design">
+                    <tr class="person-row hover:bg-slate-50" data-name="Simran Kaur" data-team="Design" id="row-Simran-Kaur">
                       <td class="py-3 px-3"><strong class="text-slate-900 block text-sm">Simran Kaur</strong><span class="text-slate-500 text-[11px]">Design Systems Lead</span></td>
                       <td class="py-3 px-3"><span class="bg-pink-50 text-pink-700 px-2 py-0.5 rounded text-[10px] font-semibold">Design</span></td>
                       <td class="py-3 px-3 font-medium">Figma AI</td>
-                      <td class="py-3 px-3"><strong class="text-slate-900">₹22,000</strong><span class="text-slate-500 block text-[11px]">Monthly seat allocation</span></td>
-                      <td class="py-3 px-3"><span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full">Safe & Approved</span></td>
-                      <td class="py-3 px-3 text-right"><button onclick="openPersonLimitModal('Simran Kaur', 'Design', 30000)" class="text-slate-500 hover:text-slate-800">Manage</button></td>
+                      <td class="py-3 px-3"><strong class="text-slate-900 block font-semibold person-spent">₹22,000</strong><span class="text-slate-500 block text-[11px] person-limit" id="limit-Simran-Kaur">Monthly seat allocation</span></td>
+                      <td class="py-3 px-3"><span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full person-status">Safe & Approved</span></td>
+                      <td class="py-3 px-3 text-right"><button onclick="openPersonLimitModal('Simran Kaur', 'Design', 30000, 22000)" class="text-slate-500 hover:text-slate-800">Manage</button></td>
                     </tr>
 
                     <!-- 30. Amit Trivedi -->
-                    <tr class="person-row hover:bg-slate-50" data-name="Amit Trivedi" data-team="Design">
+                    <tr class="person-row hover:bg-slate-50" data-name="Amit Trivedi" data-team="Design" id="row-Amit-Trivedi">
                       <td class="py-3 px-3"><strong class="text-slate-900 block text-sm">Amit Trivedi</strong><span class="text-slate-500 text-[11px]">Motion & Brand Designer</span></td>
                       <td class="py-3 px-3"><span class="bg-pink-50 text-pink-700 px-2 py-0.5 rounded text-[10px] font-semibold">Design</span></td>
                       <td class="py-3 px-3 font-medium">Figma AI</td>
-                      <td class="py-3 px-3"><strong class="text-slate-900">₹14,000</strong><span class="text-slate-500 block text-[11px]">Monthly seat allocation</span></td>
-                      <td class="py-3 px-3"><span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full">Safe & Approved</span></td>
-                      <td class="py-3 px-3 text-right"><button onclick="openPersonLimitModal('Amit Trivedi', 'Design', 20000)" class="text-slate-500 hover:text-slate-800">Manage</button></td>
+                      <td class="py-3 px-3"><strong class="text-slate-900 block font-semibold person-spent">₹14,000</strong><span class="text-slate-500 block text-[11px] person-limit" id="limit-Amit-Trivedi">Monthly seat allocation</span></td>
+                      <td class="py-3 px-3"><span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full person-status">Safe & Approved</span></td>
+                      <td class="py-3 px-3 text-right"><button onclick="openPersonLimitModal('Amit Trivedi', 'Design', 20000, 14000)" class="text-slate-500 hover:text-slate-800">Manage</button></td>
                     </tr>
 
                     <!-- 31. Shilpa Shenoy -->
-                    <tr class="person-row hover:bg-slate-50" data-name="Shilpa Shenoy" data-team="Design">
+                    <tr class="person-row hover:bg-slate-50" data-name="Shilpa Shenoy" data-team="Design" id="row-Shilpa-Shenoy">
                       <td class="py-3 px-3"><strong class="text-slate-900 block text-sm">Shilpa Shenoy</strong><span class="text-slate-500 text-[11px]">User Researcher</span></td>
                       <td class="py-3 px-3"><span class="bg-pink-50 text-pink-700 px-2 py-0.5 rounded text-[10px] font-semibold">Design</span></td>
                       <td class="py-3 px-3 font-medium">Figma AI</td>
-                      <td class="py-3 px-3"><strong class="text-slate-900">₹9,000</strong><span class="text-slate-500 block text-[11px]">Monthly seat allocation</span></td>
-                      <td class="py-3 px-3"><span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full">Safe & Approved</span></td>
-                      <td class="py-3 px-3 text-right"><button onclick="openPersonLimitModal('Shilpa Shenoy', 'Design', 20000)" class="text-slate-500 hover:text-slate-800">Manage</button></td>
+                      <td class="py-3 px-3"><strong class="text-slate-900 block font-semibold person-spent">₹9,000</strong><span class="text-slate-500 block text-[11px] person-limit" id="limit-Shilpa-Shenoy">Monthly seat allocation</span></td>
+                      <td class="py-3 px-3"><span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full person-status">Safe & Approved</span></td>
+                      <td class="py-3 px-3 text-right"><button onclick="openPersonLimitModal('Shilpa Shenoy', 'Design', 20000, 9000)" class="text-slate-500 hover:text-slate-800">Manage</button></td>
                     </tr>
 
                     <!-- ================= LEADERSHIP & OPS (4 MEMBERS) ================= -->
                     
                     <!-- 32. Vikram Malhotra -->
-                    <tr class="person-row hover:bg-slate-50" data-name="Vikram Malhotra" data-team="Leadership">
+                    <tr class="person-row hover:bg-slate-50" data-name="Vikram Malhotra" data-team="Leadership" id="row-Vikram-Malhotra">
                       <td class="py-3 px-3"><strong class="text-slate-900 block text-sm">Vikram Malhotra</strong><span class="text-slate-500 text-[11px]">VP Operations</span></td>
                       <td class="py-3 px-3"><span class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-[10px] font-semibold">Leadership</span></td>
                       <td class="py-3 px-3 font-medium">ChatGPT Enterprise</td>
-                      <td class="py-3 px-3"><strong class="text-slate-900">₹24,000</strong><span class="text-slate-500 block text-[11px]">Limit: ₹40,000</span></td>
-                      <td class="py-3 px-3"><span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full">Safe & Approved</span></td>
-                      <td class="py-3 px-3 text-right"><button onclick="openPersonLimitModal('Vikram Malhotra', 'Leadership', 40000)" class="text-slate-500 hover:text-slate-800">Manage</button></td>
+                      <td class="py-3 px-3"><strong class="text-slate-900 block font-semibold person-spent">₹24,000</strong><span class="text-slate-500 block text-[11px] person-limit" id="limit-Vikram-Malhotra">Limit: ₹40,000</span></td>
+                      <td class="py-3 px-3"><span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full person-status">Safe & Approved</span></td>
+                      <td class="py-3 px-3 text-right"><button onclick="openPersonLimitModal('Vikram Malhotra', 'Leadership', 40000, 24000)" class="text-slate-500 hover:text-slate-800">Manage</button></td>
                     </tr>
 
                     <!-- 33. Sameer Sen -->
-                    <tr class="person-row hover:bg-slate-50" data-name="Sameer Sen" data-team="Leadership">
+                    <tr class="person-row hover:bg-slate-50" data-name="Sameer Sen" data-team="Leadership" id="row-Sameer-Sen">
                       <td class="py-3 px-3"><strong class="text-slate-900 block text-sm">Sameer Sen</strong><span class="text-slate-500 text-[11px]">Head of Finance</span></td>
                       <td class="py-3 px-3"><span class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-[10px] font-semibold">Leadership</span></td>
                       <td class="py-3 px-3 font-medium">ChatGPT Enterprise</td>
-                      <td class="py-3 px-3"><strong class="text-slate-900">₹18,000</strong><span class="text-slate-500 block text-[11px]">Limit: ₹30,000</span></td>
-                      <td class="py-3 px-3"><span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full">Safe & Approved</span></td>
-                      <td class="py-3 px-3 text-right"><button onclick="openPersonLimitModal('Sameer Sen', 'Leadership', 30000)" class="text-slate-500 hover:text-slate-800">Manage</button></td>
+                      <td class="py-3 px-3"><strong class="text-slate-900 block font-semibold person-spent">₹18,000</strong><span class="text-slate-500 block text-[11px] person-limit" id="limit-Sameer-Sen">Limit: ₹30,000</span></td>
+                      <td class="py-3 px-3"><span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full person-status">Safe & Approved</span></td>
+                      <td class="py-3 px-3 text-right"><button onclick="openPersonLimitModal('Sameer Sen', 'Leadership', 30000, 18000)" class="text-slate-500 hover:text-slate-800">Manage</button></td>
                     </tr>
 
                     <!-- 34. Radhika Singhal -->
-                    <tr class="person-row hover:bg-slate-50" data-name="Radhika Singhal" data-team="Leadership">
+                    <tr class="person-row hover:bg-slate-50" data-name="Radhika Singhal" data-team="Leadership" id="row-Radhika-Singhal">
                       <td class="py-3 px-3"><strong class="text-slate-900 block text-sm">Radhika Singhal</strong><span class="text-slate-500 text-[11px]">Chief People Officer</span></td>
                       <td class="py-3 px-3"><span class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-[10px] font-semibold">Leadership</span></td>
                       <td class="py-3 px-3 font-medium">ChatGPT Enterprise</td>
-                      <td class="py-3 px-3"><strong class="text-slate-900">₹13,000</strong><span class="text-slate-500 block text-[11px]">Limit: ₹20,000</span></td>
-                      <td class="py-3 px-3"><span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full">Safe & Approved</span></td>
-                      <td class="py-3 px-3 text-right"><button onclick="openPersonLimitModal('Radhika Singhal', 'Leadership', 20000)" class="text-slate-500 hover:text-slate-800">Manage</button></td>
+                      <td class="py-3 px-3"><strong class="text-slate-900 block font-semibold person-spent">₹13,000</strong><span class="text-slate-500 block text-[11px] person-limit" id="limit-Radhika-Singhal">Limit: ₹20,000</span></td>
+                      <td class="py-3 px-3"><span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full person-status">Safe & Approved</span></td>
+                      <td class="py-3 px-3 text-right"><button onclick="openPersonLimitModal('Radhika Singhal', 'Leadership', 20000, 13000)" class="text-slate-500 hover:text-slate-800">Manage</button></td>
                     </tr>
 
                     <!-- 35. Arvind Swaminathan -->
-                    <tr class="person-row hover:bg-slate-50" data-name="Arvind Swaminathan" data-team="Leadership">
+                    <tr class="person-row hover:bg-slate-50" data-name="Arvind Swaminathan" data-team="Leadership" id="row-Arvind-Swaminathan">
                       <td class="py-3 px-3"><strong class="text-slate-900 block text-sm">Arvind Swaminathan</strong><span class="text-slate-500 text-[11px]">Legal & Governance Lead</span></td>
                       <td class="py-3 px-3"><span class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-[10px] font-semibold">Leadership</span></td>
                       <td class="py-3 px-3 font-medium">ChatGPT Enterprise</td>
-                      <td class="py-3 px-3"><strong class="text-slate-900">₹10,000</strong><span class="text-slate-500 block text-[11px]">Limit: ₹20,000</span></td>
-                      <td class="py-3 px-3"><span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full">Safe & Approved</span></td>
-                      <td class="py-3 px-3 text-right"><button onclick="openPersonLimitModal('Arvind Swaminathan', 'Leadership', 20000)" class="text-slate-500 hover:text-slate-800">Manage</button></td>
+                      <td class="py-3 px-3"><strong class="text-slate-900 block font-semibold person-spent">₹10,000</strong><span class="text-slate-500 block text-[11px] person-limit" id="limit-Arvind-Swaminathan">Limit: ₹20,000</span></td>
+                      <td class="py-3 px-3"><span class="bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full person-status">Safe & Approved</span></td>
+                      <td class="py-3 px-3 text-right"><button onclick="openPersonLimitModal('Arvind Swaminathan', 'Leadership', 20000, 10000)" class="text-slate-500 hover:text-slate-800">Manage</button></td>
                     </tr>
 
                   </tbody>
@@ -852,13 +778,13 @@
       <div class="space-y-4">
         
         <!-- Quick Approvals Box -->
-        <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+        <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm" id="approvalCard">
           <div class="flex items-center justify-between pb-3 border-b border-slate-100">
             <h2 class="font-bold text-slate-900 text-sm">Pending Budget Requests</h2>
-            <span class="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-0.5 rounded-full">1 New</span>
+            <span class="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-0.5 rounded-full" id="approvalBadge">1 New</span>
           </div>
 
-          <div class="mt-4 p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-2">
+          <div id="requestContent" class="mt-4 p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-2">
             <div class="flex justify-between items-start">
               <div>
                 <strong class="text-slate-900 text-sm">Rohan Sharma</strong>
@@ -877,6 +803,10 @@
                 Decline
               </button>
             </div>
+          </div>
+
+          <div id="requestApprovedBanner" class="hidden mt-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800">
+            <strong>✓ Approved!</strong> Added +₹50,000 to Engineering. Rohan Sharma's limit increased to ₹1,70,000.
           </div>
         </div>
 
@@ -898,7 +828,7 @@
               <p class="text-slate-700">
                 <strong>Sneha Rao</strong> (Sales) logged into a personal ChatGPT account on her company laptop.
               </p>
-              <button onclick="alert('Invited Sneha to company approved account.')" class="text-blue-600 font-medium hover:underline text-[11px] pt-1 block">
+              <button onclick="showToast('Sent company ChatGPT login link to Sneha Rao.')" class="text-blue-600 font-medium hover:underline text-[11px] pt-1 block">
                 Give her official company login →
               </button>
             </div>
@@ -912,8 +842,8 @@
               <p class="text-slate-700">
                 <strong>Arjun Mehta's</strong> automated script made 500 calls in 10 minutes. The system automatically paused it.
               </p>
-              <button onclick="alert('Notification sent to Arjun.')" class="text-blue-600 font-medium hover:underline text-[11px] pt-1 block">
-                Acknowledge & message Arjun →
+              <button onclick="openPersonLimitModal('Arjun Mehta', 'Engineering', 80000, 110000)" class="text-blue-600 font-medium hover:underline text-[11px] pt-1 block">
+                Adjust limit & unpause Arjun →
               </button>
             </div>
 
@@ -936,17 +866,78 @@
 
     </div>
 
-    <!-- Simple Modal: Change Person Limit -->
-    <div id="personLimitModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl border border-slate-200">
-        <h3 class="font-bold text-slate-900 text-base" id="modalPersonTitle">Change Limit</h3>
-        <p class="text-xs text-slate-500 mt-1" id="modalPersonSub">Set weekly spending limit for this person.</p>
+    <!-- MODAL 1: CHANGE TEAM BUDGET (Fully Dynamic & Working) -->
+    <div id="teamBudgetModal" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
+      <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 relative">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+          <h3 class="font-bold text-slate-900 text-base">Change Team Weekly Budget</h3>
+          <button onclick="closeModal('teamBudgetModal')" class="text-slate-400 hover:text-slate-600 text-lg font-bold">&times;</button>
+        </div>
         
         <div class="mt-4 space-y-3 text-xs">
+          <div>
+            <label class="block text-slate-700 font-medium mb-1">Choose Team</label>
+            <select id="modalSelectTeam" onchange="onModalTeamSelectChange()" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-slate-800 font-semibold focus:outline-none focus:border-blue-500">
+              <option value="Engineering">Engineering (Claude Code)</option>
+              <option value="Sales">Sales (ChatGPT Enterprise)</option>
+              <option value="Design">Design (Figma AI)</option>
+              <option value="Leadership">Leadership (ChatGPT Enterprise)</option>
+            </select>
+          </div>
+
+          <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+            <div class="flex justify-between text-slate-600">
+              <span>Current Weekly Spend:</span>
+              <strong id="modalTeamCurrentSpent" class="text-slate-900">₹3,60,000</strong>
+            </div>
+            <div class="flex justify-between text-slate-600 mt-1">
+              <span>Current Limit:</span>
+              <strong id="modalTeamCurrentLimit" class="text-slate-900">₹4,00,000</strong>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-slate-700 font-medium mb-1">New Weekly Budget (₹)</label>
+            <input type="number" id="modalTeamNewLimitInput" value="450000" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-slate-900 font-bold text-sm focus:outline-none focus:border-blue-500">
+            <span class="text-[11px] text-slate-500 mt-1 block">Takes effect immediately and updates all org charts.</span>
+          </div>
+        </div>
+
+        <div class="mt-6 flex justify-end gap-2 text-xs">
+          <button onclick="closeModal('teamBudgetModal')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl">Cancel</button>
+          <button onclick="saveTeamBudget()" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl shadow-sm">Save Changes</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL 2: CHANGE INDIVIDUAL PERSON LIMIT (Fully Dynamic & Working) -->
+    <div id="personLimitModal" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
+      <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 relative">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+          <div>
+            <h3 class="font-bold text-slate-900 text-base" id="modalPersonTitle">Set Limit</h3>
+            <p class="text-xs text-slate-500" id="modalPersonSub">Team • Current limit</p>
+          </div>
+          <button onclick="closeModal('personLimitModal')" class="text-slate-400 hover:text-slate-600 text-lg font-bold">&times;</button>
+        </div>
+        
+        <div class="mt-4 space-y-3 text-xs">
+          <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 flex justify-between">
+            <div>
+              <span class="text-slate-500 block text-[10px]">Money Spent</span>
+              <strong class="text-slate-900 text-sm" id="modalPersonSpent">₹0</strong>
+            </div>
+            <div class="text-right">
+              <span class="text-slate-500 block text-[10px]">Current Cap</span>
+              <strong class="text-blue-600 text-sm" id="modalPersonCap">₹0</strong>
+            </div>
+          </div>
+
           <div>
             <label class="block text-slate-700 font-medium mb-1">New Weekly Limit (₹)</label>
             <input type="number" id="newCapValue" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-slate-900 font-bold text-sm focus:outline-none focus:border-blue-500">
           </div>
+
           <div>
             <label class="block text-slate-700 font-medium mb-1">When limit is reached:</label>
             <select class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2 text-slate-700">
@@ -958,35 +949,7 @@
 
         <div class="mt-6 flex justify-end gap-2 text-xs">
           <button onclick="closeModal('personLimitModal')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl">Cancel</button>
-          <button onclick="savePersonLimit()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl">Save</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Simple Modal: Team Budget -->
-    <div id="newBudgetModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl border border-slate-200">
-        <h3 class="font-bold text-slate-900 text-base">Change Team Weekly Budget</h3>
-        
-        <div class="mt-4 space-y-3 text-xs">
-          <div>
-            <label class="block text-slate-700 font-medium mb-1">Choose Team</label>
-            <select class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2 text-slate-700">
-              <option>Engineering (Claude Code)</option>
-              <option>Sales (ChatGPT Enterprise)</option>
-              <option>Design (Figma AI)</option>
-              <option>Leadership (ChatGPT Enterprise)</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-slate-700 font-medium mb-1">Weekly Budget (₹)</label>
-            <input type="number" value="450000" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-slate-900 font-bold text-sm">
-          </div>
-        </div>
-
-        <div class="mt-6 flex justify-end gap-2 text-xs">
-          <button onclick="closeModal('newBudgetModal')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl">Cancel</button>
-          <button onclick="saveTeamLimit()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl">Save</button>
+          <button onclick="savePersonLimit()" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl shadow-sm">Save Limit</button>
         </div>
       </div>
     </div>
@@ -994,8 +957,39 @@
   </div>
 
   <script>
+    // Global Application State
+    const appState = {
+      teams: {
+        Engineering: { spent: 360000, limit: 400000, tool: "Claude Code", count: 15 },
+        Sales: { spent: 225000, limit: 300000, tool: "ChatGPT Enterprise", count: 10 },
+        Design: { spent: 130000, limit: 200000, tool: "Figma AI", count: 6 },
+        Leadership: { spent: 65000, limit: 100000, tool: "ChatGPT Enterprise", count: 4 }
+      },
+      currentPerson: null
+    };
+
     let activeTeamFilter = 'ALL';
 
+    // Format currency to Indian Rupees
+    function formatINR(val) {
+      return '₹' + Number(val).toLocaleString('en-IN');
+    }
+
+    // Toast notification helper
+    function showToast(message) {
+      const toast = document.getElementById('toastNotification');
+      const toastMsg = document.getElementById('toastMessage');
+      toastMsg.textContent = message;
+      toast.classList.remove('opacity-0', 'translate-y-[-20px]', 'pointer-events-none');
+      toast.classList.add('opacity-100', 'translate-y-0');
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-[-20px]', 'pointer-events-none');
+        toast.classList.remove('opacity-100', 'translate-y-0');
+      }, 3500);
+    }
+
+    // Open & Close Modals
     function openModal(id) {
       document.getElementById(id).classList.remove('hidden');
     }
@@ -1003,6 +997,217 @@
       document.getElementById(id).classList.add('hidden');
     }
 
+    // Close modal when clicking backdrop
+    window.addEventListener('click', (e) => {
+      const teamModal = document.getElementById('teamBudgetModal');
+      const personModal = document.getElementById('personLimitModal');
+      if (e.target === teamModal) closeModal('teamBudgetModal');
+      if (e.target === personModal) closeModal('personLimitModal');
+    });
+
+    // Open Team Budget Modal
+    function openChangeBudgetModal(teamName) {
+      const team = teamName || 'Engineering';
+      document.getElementById('modalSelectTeam').value = team;
+      onModalTeamSelectChange();
+      openModal('teamBudgetModal');
+    }
+
+    function onModalTeamSelectChange() {
+      const team = document.getElementById('modalSelectTeam').value;
+      const data = appState.teams[team];
+      document.getElementById('modalTeamCurrentSpent').textContent = formatINR(data.spent);
+      document.getElementById('modalTeamCurrentLimit').textContent = formatINR(data.limit);
+      document.getElementById('modalTeamNewLimitInput').value = data.limit;
+    }
+
+    // Save Team Budget (Updates UI dynamically)
+    function saveTeamBudget() {
+      const team = document.getElementById('modalSelectTeam').value;
+      const newLimit = Number(document.getElementById('modalTeamNewLimitInput').value);
+
+      if (!newLimit || newLimit <= 0) {
+        alert("Please enter a valid budget amount.");
+        return;
+      }
+
+      // Update state
+      appState.teams[team].limit = newLimit;
+
+      // Re-render UI
+      renderBudgetUI();
+
+      closeModal('teamBudgetModal');
+      showToast(`${team} team budget updated to ${formatINR(newLimit)}!`);
+    }
+
+    // Render all budget numbers dynamically
+    function renderBudgetUI() {
+      let totalSpent = 0;
+      let totalLimit = 0;
+
+      for (const [teamName, data] of Object.entries(appState.teams)) {
+        totalSpent += data.spent;
+        totalLimit += data.limit;
+
+        const burnPct = Math.round((data.spent / data.limit) * 100);
+        const remaining = data.limit - data.spent;
+
+        // Update team card elements
+        const prefix = teamName.toLowerCase().slice(0, 4); // eng, sale, desi, lead
+        let key = '';
+        if (teamName === 'Engineering') key = 'eng';
+        else if (teamName === 'Sales') key = 'sales';
+        else if (teamName === 'Design') key = 'design';
+        else if (teamName === 'Leadership') key = 'leadership';
+
+        const limitEl = document.getElementById(`${key}LimitText`);
+        const spentEl = document.getElementById(`${key}SpentText`);
+        const barEl = document.getElementById(`${key}ProgressBar`);
+        const remEl = document.getElementById(`${key}RemainingText`);
+        const badgeEl = document.getElementById(`${key}Badge`);
+
+        if (limitEl) limitEl.textContent = `Limit: ${formatINR(data.limit)}`;
+        if (spentEl) spentEl.textContent = formatINR(data.spent);
+        if (barEl) {
+          barEl.style.width = Math.min(burnPct, 100) + '%';
+          if (burnPct >= 90) {
+            barEl.className = 'h-2.5 rounded-full bg-red-500 transition-all duration-500';
+          } else if (burnPct >= 75) {
+            barEl.className = 'h-2.5 rounded-full bg-amber-500 transition-all duration-500';
+          } else {
+            barEl.className = 'h-2.5 rounded-full bg-emerald-500 transition-all duration-500';
+          }
+        }
+
+        if (badgeEl) {
+          if (burnPct >= 90) {
+            badgeEl.className = 'bg-red-100 text-red-700 text-xs font-medium px-2 py-0.5 rounded-full';
+            badgeEl.textContent = `Almost full (${burnPct}%)`;
+          } else if (burnPct >= 75) {
+            badgeEl.className = 'bg-amber-100 text-amber-800 text-xs font-medium px-2 py-0.5 rounded-full';
+            badgeEl.textContent = `Normal (${burnPct}%)`;
+          } else {
+            badgeEl.className = 'bg-emerald-100 text-emerald-700 text-xs font-medium px-2 py-0.5 rounded-full';
+            badgeEl.textContent = `Safe (${burnPct}%)`;
+          }
+        }
+
+        if (remEl) {
+          if (remaining > 0) {
+            remEl.textContent = `${formatINR(remaining)} left for this week`;
+            remEl.className = burnPct >= 90 ? 'text-[11px] text-red-600 mt-1 font-medium' : 'text-[11px] text-slate-500 mt-1';
+          } else {
+            remEl.textContent = `Budget exceeded by ${formatINR(Math.abs(remaining))}`;
+            remEl.className = 'text-[11px] text-red-600 mt-1 font-bold';
+          }
+        }
+      }
+
+      // Update Top Org Cards
+      const orgRemaining = totalLimit - totalSpent;
+      const orgBurnPct = Math.round((totalSpent / totalLimit) * 100);
+
+      document.getElementById('orgTotalBudget').textContent = formatINR(totalLimit);
+      document.getElementById('orgTotalSpent').textContent = formatINR(totalSpent);
+      document.getElementById('orgMoneyLeft').textContent = formatINR(orgRemaining);
+
+      const orgBadge = document.getElementById('orgBurnPercentBadge');
+      if (orgBadge) orgBadge.textContent = `${orgBurnPct}% used`;
+
+      const orgBar = document.getElementById('orgProgressBar');
+      if (orgBar) {
+        orgBar.style.width = Math.min(orgBurnPct, 100) + '%';
+        if (orgBurnPct >= 90) {
+          orgBar.className = 'h-2 rounded-full bg-red-500 transition-all duration-500';
+        } else if (orgBurnPct >= 75) {
+          orgBar.className = 'h-2 rounded-full bg-amber-500 transition-all duration-500';
+        } else {
+          orgBar.className = 'h-2 rounded-full bg-emerald-500 transition-all duration-500';
+        }
+      }
+    }
+
+    // Open Person Limit Modal
+    function openPersonLimitModal(name, team, cap, spent) {
+      appState.currentPerson = { name, team, cap, spent: spent || cap };
+      document.getElementById('modalPersonTitle').textContent = `Set Limit for ${name}`;
+      document.getElementById('modalPersonSub').textContent = `${team} team`;
+      document.getElementById('modalPersonSpent').textContent = formatINR(appState.currentPerson.spent);
+      document.getElementById('modalPersonCap').textContent = formatINR(cap);
+      document.getElementById('newCapValue').value = cap;
+      openModal('personLimitModal');
+    }
+
+    // Save Person Limit
+    function savePersonLimit() {
+      const newCap = Number(document.getElementById('newCapValue').value);
+      if (!newCap || newCap <= 0) {
+        alert("Please enter a valid limit.");
+        return;
+      }
+
+      if (!appState.currentPerson) return;
+
+      const personName = appState.currentPerson.name;
+      const safeId = personName.replace(/\s+/g, '-');
+
+      // Update in table
+      const limitEl = document.getElementById(`limit-${safeId}`);
+      const statusEl = document.getElementById(`status-${safeId}`);
+
+      if (limitEl) {
+        limitEl.textContent = `Limit: ${formatINR(newCap)}`;
+      }
+
+      if (statusEl) {
+        if (appState.currentPerson.spent > newCap) {
+          statusEl.className = "bg-red-100 text-red-700 text-[11px] font-semibold px-2 py-0.5 rounded-full person-status";
+          statusEl.textContent = "Exceeded Limit";
+        } else if (appState.currentPerson.spent === newCap) {
+          statusEl.className = "bg-amber-100 text-amber-800 text-[11px] font-semibold px-2 py-0.5 rounded-full person-status";
+          statusEl.textContent = "Hit 100% of Limit";
+        } else {
+          statusEl.className = "bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full person-status";
+          statusEl.textContent = "Safe & Approved";
+        }
+      }
+
+      closeModal('personLimitModal');
+      showToast(`Limit for ${personName} set to ${formatINR(newCap)}/week!`);
+    }
+
+    // Approve Rohan's Request
+    function approveRequest() {
+      // Add 50,000 to Engineering
+      appState.teams.Engineering.limit += 50000;
+      renderBudgetUI();
+
+      // Update Rohan's row
+      const rohanLimit = document.getElementById('limit-Rohan-Sharma');
+      const rohanStatus = document.getElementById('status-Rohan-Sharma');
+      if (rohanLimit) rohanLimit.textContent = 'Limit: ₹1,70,000';
+      if (rohanStatus) {
+        rohanStatus.className = "bg-emerald-100 text-emerald-800 text-[11px] font-semibold px-2 py-0.5 rounded-full";
+        rohanStatus.textContent = "Safe (Cap Raised)";
+      }
+
+      document.getElementById('requestContent').classList.add('hidden');
+      document.getElementById('requestApprovedBanner').classList.remove('hidden');
+      document.getElementById('approvalBadge').textContent = '0 New';
+      document.getElementById('approvalBadge').className = 'bg-slate-100 text-slate-500 text-xs font-bold px-2 py-0.5 rounded-full';
+
+      showToast("Approved +₹50,000 for Rohan Sharma (Engineering)!");
+    }
+
+    function rejectRequest() {
+      document.getElementById('requestContent').innerHTML = '<p class="text-slate-500 italic py-2">Request was declined.</p>';
+      document.getElementById('approvalBadge').textContent = '0 New';
+      document.getElementById('approvalBadge').className = 'bg-slate-100 text-slate-500 text-xs font-bold px-2 py-0.5 rounded-full';
+      showToast("Request declined.");
+    }
+
+    // Tabs & Filters
     function showTab(tab) {
       const teamView = document.getElementById('teamView');
       const personView = document.getElementById('personView');
@@ -1031,7 +1236,6 @@
       showTab('person');
       applyFilters();
 
-      // Scroll smoothly to person table
       document.getElementById('personView').scrollIntoView({ behavior: 'smooth' });
     }
 
@@ -1077,11 +1281,9 @@
         }
       });
 
-      // Update counters
       document.getElementById('visibleCount').textContent = visible;
       document.getElementById('filteredBottomCount').textContent = visible;
 
-      // Update pill banner
       const pill = document.getElementById('filterPillContainer');
       const pillText = document.getElementById('filterPillText');
       const filteredCount = document.getElementById('filteredCount');
@@ -1101,34 +1303,9 @@
       }
     }
 
-    function openPersonLimitModal(name, team, cap) {
-      document.getElementById('modalPersonTitle').textContent = `Set Limit for ${name}`;
-      document.getElementById('modalPersonSub').textContent = `${team} team • Current limit: ₹${cap.toLocaleString('en-IN')}`;
-      document.getElementById('newCapValue').value = cap;
-      openModal('personLimitModal');
-    }
-
-    function savePersonLimit() {
-      const val = document.getElementById('newCapValue').value;
-      alert(`Limit successfully updated to ₹${Number(val).toLocaleString('en-IN')} per week.`);
-      closeModal('personLimitModal');
-    }
-
-    function saveTeamLimit() {
-      alert("Team budget updated successfully.");
-      closeModal('newBudgetModal');
-    }
-
-    function approveRequest() {
-      alert("Approved +₹50,000 for Rohan Sharma (Engineering). New limit applied immediately.");
-    }
-
-    function rejectRequest() {
-      alert("Request declined.");
-    }
-
-    // Initialize counts on page load
+    // Initialize counts & budget UI on page load
     window.addEventListener('DOMContentLoaded', () => {
+      renderBudgetUI();
       applyFilters();
     });
   </script>
